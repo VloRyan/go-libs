@@ -6,6 +6,6 @@
 
 # Contents
 * httpx - Http server
-* reflectx - Refelction
+* reflectx - Reflection
 * sqlx - Sql with named param support
 * stringx - Formating
