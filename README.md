@@ -1,4 +1,4 @@
-[![Feature Workflow](https://github.com/VloRyan/go-libs/actions/workflows/dev.workflow.yml/badge.svg)](https://github.com/VloRyan/go-libs/actions/workflows/dev.workflow.yml)
+[![CI](https://github.com/VloRyan/go-libs/actions/workflows/dev.workflow.yml/badge.svg)](https://github.com/VloRyan/go-libs/actions/workflows/dev.workflow.yml)
 
 # Libraries for go
 
