@@ -1,3 +1,5 @@
+[![Feature Workflow](https://github.com/VloRyan/go-libs/actions/workflows/dev.workflow.yml/badge.svg)](https://github.com/VloRyan/go-libs/actions/workflows/dev.workflow.yml)
+
 # Libraries for go
 
 **go-libs** contains several libs with extends or enhances go std libraries.
