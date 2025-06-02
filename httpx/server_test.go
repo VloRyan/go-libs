@@ -86,10 +86,7 @@ func TestServer(t *testing.T) {
 func startServerWithWait(t *testing.T, srv *Server, waitSecs int) {
 	srv.Start()
 	msWaited := 0
-	for {
-		if srv.status == StatusStarted {
-			break
-		}
+	for srv.status != StatusStarted {
 		if time.Duration(msWaited) == time.Duration(waitSecs)*1000 {
 			t.Fatalf("Server did not start after %d seconds", waitSecs)
 		}

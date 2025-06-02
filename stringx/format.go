@@ -9,15 +9,15 @@ var matchAllCap = regexp.MustCompile(`([a-z0-9])\s*([A-Z])`)
 
 func ToSnakeCase(str string) string {
 	snake := matchAllCap.ReplaceAllString(str, "${1}_${2}")
-	snake = strings.Replace(snake, " ", "_", -1)
-	snake = strings.Replace(snake, "-", "_", -1)
+	snake = strings.ReplaceAll(snake, " ", "_")
+	snake = strings.ReplaceAll(snake, "-", "_")
 	return strings.ToLower(snake)
 }
 
 func ToKebabCase(str string) string {
 	kebab := matchAllCap.ReplaceAllString(str, "${1}-${2}")
-	kebab = strings.Replace(kebab, " ", "-", -1)
-	kebab = strings.Replace(kebab, "_", "-", -1)
+	kebab = strings.ReplaceAll(kebab, " ", "-")
+	kebab = strings.ReplaceAll(kebab, "_", "-")
 	return strings.ToLower(kebab)
 }
 

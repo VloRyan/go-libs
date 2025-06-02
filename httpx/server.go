@@ -61,14 +61,14 @@ func (s *Server) Start() {
 }
 
 func (s *Server) URL() *url.URL {
-	parts := strings.Split(s.Server.Addr, ":")
+	parts := strings.Split(s.Addr, ":")
 	hostName := parts[0]
 	port := parts[1]
 	if hostName == "" {
 		hostName = "localhost"
 	}
 	protocol := "https://"
-	if s.Server.TLSConfig == nil {
+	if s.TLSConfig == nil {
 		protocol = "http://"
 	}
 	u, err := url.Parse(protocol + hostName + ":" + port)
