@@ -1,0 +1,35 @@
+{
+  "atomic:operations": [
+    {
+      "op": "add",
+      "href": "/blogPosts",
+      "data": {
+        "lid": "thePost",
+        "type": "articles",
+        "attributes": {
+          "title": "JSON API paints my bikeshed!"
+        },
+        "relationships": {
+          "tags": {
+            "data": {
+              "lid": "theTag",
+              "type": "tags"
+            }
+          },
+          "categories": {
+            "data": [
+              {
+                "lid": "catA",
+                "type": "categories"
+              },
+              {
+                "lid": "catB",
+                "type": "categories"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

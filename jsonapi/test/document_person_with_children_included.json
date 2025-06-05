@@ -1,0 +1,51 @@
+{
+  "data": {
+    "id": "814",
+    "type": "person",
+    "attributes": {
+      "name": "Gunter Hammer"
+    },
+    "links": {
+      "self": "https://unit-test.net/person/814"
+    },
+    "relationships": {
+      "children": {
+        "data": [
+          {
+            "type": "person",
+            "id": "816"
+          },
+          {
+            "type": "person",
+            "id": "817"
+          }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "id": "816",
+      "type": "person",
+      "attributes": {
+        "name": "Georg Weber"
+      },
+      "links": {
+        "self": "https://unit-test.net/person/816"
+      }
+    },
+    {
+      "id": "817",
+      "type": "person",
+      "attributes": {
+        "name": "Manfred Hammer"
+      },
+      "links": {
+        "self": "https://unit-test.net/person/817"
+      }
+    }
+  ],
+  "jsonapi": {
+    "version": "1.1"
+  }
+}

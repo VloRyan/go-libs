@@ -1,0 +1,12 @@
+{
+  "id": "1",
+  "type": "object",
+  "relationships": {
+    "field": {
+      "data": {
+        "id": "4711",
+        "type": "fieldMarshaler"
+      }
+    }
+  }
+}

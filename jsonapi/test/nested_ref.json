@@ -1,0 +1,37 @@
+{
+  "id": "4711",
+  "type": "person",
+  "attributes": {
+    "nestedRef": {
+      "name": "I am the object"
+    },
+    "childrenNestedRef": [
+      {
+        "name": "First"
+      },
+      {
+        "name": "Second"
+      }
+    ]
+  },
+  "relationships": {
+    "nestedRef.other": {
+      "data": {
+        "id": "4711",
+        "type": "Type1"
+      }
+    },
+    "childrenNestedRef[0].other": {
+      "data": {
+        "id": "4712",
+        "type": "Type2"
+      }
+    },
+    "childrenNestedRef[1].other": {
+      "data": {
+        "id": "4713",
+        "type": "Type3"
+      }
+    }
+  }
+}

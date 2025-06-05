@@ -1,0 +1,39 @@
+{
+  "data": {
+    "id": "4711",
+    "type": "nested.person",
+    "attributes": {
+      "nested": [
+        {
+          "id": "814",
+          "type": "person",
+          "name": "Gunter Hammer"
+        },
+        {
+          "_comment": "Will use data of included"
+        }
+      ]
+    },
+    "relationships": {
+      "nested[1]": {
+        "data": {
+          "id": "4711",
+          "type": "person"
+        }
+      }
+    }
+  },
+  "included": [
+    {
+      "id": "4711",
+      "type": "person",
+      "attributes": {
+        "name": "Erik Janson"
+      }
+    }
+  ],
+  "jsonapi": {
+    "version": "1.1"
+  }
+}
+
