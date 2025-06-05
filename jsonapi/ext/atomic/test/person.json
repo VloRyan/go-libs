@@ -1,0 +1,10 @@
+{
+  "id": "4711",
+  "type": "person",
+  "attributes": {
+    "name": "Hans Müller",
+    "age": 47,
+    "salary": 666.66,
+    "birthday": "1985-06-15T12:13:59Z"
+  }
+}
