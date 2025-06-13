@@ -1,0 +1,18 @@
+{
+  "data": {
+    "id": "4711",
+    "type": "any",
+    "attributes": {
+      "map": {
+        "1": 1,
+        "2": 2
+      }
+    },
+    "links": {
+      "self": "https://unit-test.net/person/4711"
+    }
+  },
+  "jsonapi": {
+    "version": "1.1"
+  }
+}

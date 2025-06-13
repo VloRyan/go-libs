@@ -1,0 +1,22 @@
+{
+  "atomic:operations": [
+    {
+      "op": "update",
+      "href": "/blogPosts",
+      "data": {
+        "id": "4711",
+        "type": "articles",
+        "attributes": {
+          "title": "JSON API paints my bikeshed!"
+        }
+      }
+    },
+    {
+      "op": "delete",
+      "ref": {
+        "id": "4711",
+        "type": "articles"
+      }
+    }
+  ]
+}

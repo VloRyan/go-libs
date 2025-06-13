@@ -1,0 +1,27 @@
+{
+  "data": [
+    {
+      "id": "4711",
+      "type": "person",
+      "attributes": {
+        "name": "Hans Müller",
+        "age": 47,
+        "salary": 666.66,
+        "birthday": "1985-06-15T12:13:59Z"
+      }
+    },
+    {
+      "id": "4712",
+      "type": "person",
+      "attributes": {
+        "name": "Gudrun Müller",
+        "age": 46,
+        "salary": 777.77,
+        "birthday": "1986-06-15T12:13:59Z"
+      }
+    }
+  ],
+  "jsonapi": {
+    "version": "1.1"
+  }
+}

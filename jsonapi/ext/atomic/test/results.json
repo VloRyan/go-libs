@@ -1,0 +1,17 @@
+{
+  "atomic:results": [
+    {
+      "data": {
+        "links": {
+          "self": "http://example.com/blogPosts/13"
+        },
+        "type": "articles",
+        "id": "13",
+        "attributes": {
+          "title": "JSON API paints my bikeshed!"
+        }
+      }
+    },
+    {}
+  ]
+}
