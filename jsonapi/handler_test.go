@@ -69,9 +69,9 @@ func TestGenericHandler_Handle(t *testing.T) {
 			return NewRequest(t, http.MethodGet, "http://localhost:8080/default/item/4711", nil, map[string][]string{"Content-Type": {MediaType}})
 		},
 		f: func(req *http.Request) (*DocumentData[*Item], *Error) {
-			return NewDocumentData[*Item](defaultItem), nil
+			return NewDocumentData[*Item](defaultItem, "/default/item"), nil
 		},
-		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4711","type":"default.item","attributes":{"attributeA":"A","attributeB":"B"}},"jsonapi":{"version":"1.1"}}`,
+		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4711","type":"default.item","attributes":{"attributeA":"A","attributeB":"B"},"links":{"self":"/default/item/4711"}},"jsonapi":{"version":"1.1"}}`,
 	}, {
 		name: "no content",
 		reqFunc: func(t *testing.T) *http.Request {
@@ -87,21 +87,21 @@ func TestGenericHandler_Handle(t *testing.T) {
 			return NewRequest(t, http.MethodGet, "http://localhost:8080/default/item/4711?fields[default.item]=attributeB", nil, map[string][]string{"Content-Type": {MediaType}})
 		},
 		f: func(req *http.Request) (*DocumentData[*Item], *Error) {
-			return NewDocumentData[*Item](defaultItem), nil
+			return NewDocumentData[*Item](defaultItem, "/default/item"), nil
 		},
-		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4711","type":"default.item","attributes":{"attributeB":"B"}},"jsonapi":{"version":"1.1"}}`,
+		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4711","type":"default.item","attributes":{"attributeB":"B"},"links":{"self":"/default/item/4711"}},"jsonapi":{"version":"1.1"}}`,
 	}, {
 		name: "additional field filter",
 		reqFunc: func(t *testing.T) *http.Request {
 			return NewRequest(t, http.MethodGet, "http://localhost:8080/default/item/4711?fields[default.item]=attributeB", nil, map[string][]string{"Content-Type": {MediaType}})
 		},
 		f: func(req *http.Request) (*DocumentData[*Item], *Error) {
-			return NewDocumentData[*Item](defaultItem), nil
+			return NewDocumentData[*Item](defaultItem, "/default/item"), nil
 		},
 		fieldFilter: func(typeName, fieldName string) bool {
 			return !strings.EqualFold(fieldName, "attributeB")
 		},
-		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4711","type":"default.item"},"jsonapi":{"version":"1.1"}}`,
+		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4711","type":"default.item","links":{"self":"/default/item/4711"}},"jsonapi":{"version":"1.1"}}`,
 	}, {
 		name: "error",
 		reqFunc: func(t *testing.T) *http.Request {
@@ -117,10 +117,10 @@ func TestGenericHandler_Handle(t *testing.T) {
 			return NewRequest(t, http.MethodGet, "http://localhost:8080/default/item/4711?include=relationshipA", nil, map[string][]string{"Content-Type": {MediaType}})
 		},
 		f: func(req *http.Request) (*DocumentData[*Item], *Error) {
-			return NewDocumentData[*Item](&Item{ID: 4712, Type: "default.item", RelationshipA: defaultItem}), nil
+			return NewDocumentData[*Item](&Item{ID: 4712, Type: "default.item", RelationshipA: defaultItem}, "/default/item"), nil
 		},
-		resolveMap: map[string]*ResourceObject{"4711": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "4711", Type: "default.item"}}},
-		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4712","type":"default.item","relationships":{"relationshipA":{"data":{"id":"4711","type":"default.item"}}}},"jsonapi":{"version":"1.1"},"included":[{"id":"4711","type":"default.item"}]}`,
+		resolveMap: map[string]*ResourceObject{"4711": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "4711", Type: "default.item"}, Links: map[string]any{"self": "/default/item/4711"}}},
+		wantStatus: http.StatusOK, wantBody: `{"data":{"id":"4712","type":"default.item","relationships":{"relationshipA":{"data":{"id":"4711","type":"default.item"}}},"links":{"self":"/default/item/4712"}},"jsonapi":{"version":"1.1"},"included":[{"id":"4711","type":"default.item","links":{"self":"/default/item/4711"}}]}`,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

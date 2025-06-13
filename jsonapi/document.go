@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vloryan/go-libs/sqlx/pagination"
+	"net/url"
 	"reflect"
 	"slices"
 	"strings"
@@ -307,23 +308,46 @@ type DocumentData[T any] struct {
 	Includes []*ResourceObject
 }
 
-func NewDocumentData[T any](v any) *DocumentData[T] {
+func NewDocumentData[T any](v any, self string) *DocumentData[T] {
 	rv := reflectx.ValueOf(v, true)
 	if rv.Kind() == reflect.Slice {
 		dataItems := make([]*DocumentDataItem[T], rv.Len())
-		for i := range v.([]T) {
-			dataItems[i] = &DocumentDataItem[T]{Data: v.([]T)[i]}
+		for i, vi := range v.([]T) {
+			dataItems[i] = &DocumentDataItem[T]{
+				Data:  vi,
+				Links: map[string]any{"self": self},
+			}
+			if len(self) == 0 {
+				continue
+			}
+			id, ok := identifier(vi)
+			if !ok {
+				continue
+			}
+			dataItems[i].Links = map[string]any{"self": joinUrl(self, id.ID)}
 		}
 		return &DocumentData[T]{
 			Items:   dataItems,
 			IsSlice: true,
 		}
 	}
-	return &DocumentData[T]{
-		Items: []*DocumentDataItem[T]{
-			{Data: v.(T)},
-		},
+	items := []*DocumentDataItem[T]{
+		{Data: v.(T)},
 	}
+
+	if len(self) > 0 {
+		id, ok := identifier(v.(T))
+		if ok {
+			items[0].Links = map[string]any{"self": joinUrl(self, id.ID)}
+		}
+	}
+	return &DocumentData[T]{
+		Items: items,
+	}
+}
+func joinUrl(base string, p ...string) string {
+	r, _ := url.JoinPath(base, p...)
+	return r
 }
 
 func (d *DocumentData[T]) Single() T {
