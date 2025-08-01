@@ -131,9 +131,10 @@ func setIntField(val string, bitSize int, field reflect.Value) error {
 	}
 	intVal, err := strconv.ParseInt(val, 10, bitSize)
 	if err != nil {
-		field.SetInt(intVal)
+		return err
 	}
-	return err
+	field.SetInt(intVal)
+	return nil
 }
 
 func setUintField(val string, bitSize int, field reflect.Value) error {
@@ -141,10 +142,11 @@ func setUintField(val string, bitSize int, field reflect.Value) error {
 		val = "0"
 	}
 	uintVal, err := strconv.ParseUint(val, 10, bitSize)
-	if err == nil {
-		field.SetUint(uintVal)
+	if err != nil {
+		return err
 	}
-	return err
+	field.SetUint(uintVal)
+	return nil
 }
 
 func setBoolField(val string, field reflect.Value) error {
@@ -152,10 +154,12 @@ func setBoolField(val string, field reflect.Value) error {
 		val = "false"
 	}
 	boolVal, err := strconv.ParseBool(val)
-	if err == nil {
-		field.SetBool(boolVal)
+	if err != nil {
+		return err
 	}
-	return err
+
+	field.SetBool(boolVal)
+	return nil
 }
 
 func setFloatField(val string, bitSize int, field reflect.Value) error {
@@ -163,10 +167,11 @@ func setFloatField(val string, bitSize int, field reflect.Value) error {
 		val = "0.0"
 	}
 	floatVal, err := strconv.ParseFloat(val, bitSize)
-	if err == nil {
-		field.SetFloat(floatVal)
+	if err != nil {
+		return err
 	}
-	return err
+	field.SetFloat(floatVal)
+	return nil
 }
 
 func setTimeField(val string, structField reflect.StructField, value reflect.Value) error {
