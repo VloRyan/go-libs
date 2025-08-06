@@ -109,7 +109,13 @@ func (h *GenericHandler[T]) NewDoc(req *http.Request, data *DocumentData[T]) *Do
 		} else {
 			obj = doc.Data.(*ResourceObject)
 		}
-		obj.Meta = item.Meta
+		if obj.Meta == nil {
+			obj.Meta = make(MetaData)
+		}
+		for k, v := range item.Meta {
+			obj.Meta[k] = v
+		}
+
 		obj.Links = item.Links
 	}
 
