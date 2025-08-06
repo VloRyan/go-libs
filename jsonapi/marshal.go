@@ -121,10 +121,8 @@ func mapStructFields(obj *ResourceObject, rv reflect.Value, path string, fieldNa
 				if err != nil {
 					return err
 				}
-				if resObj.ID != "" {
-					name := joinPath(path, attribName(sf))
-					obj.Relationships[name] = &RelationshipObject{Data: &resObj.ResourceIdentifierObject}
-				}
+				name := joinPath(path, attribName(sf))
+				obj.Relationships[name] = &RelationshipObject{Data: &resObj.ResourceIdentifierObject}
 				continue
 			}
 
