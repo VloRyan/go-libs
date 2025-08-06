@@ -2,9 +2,10 @@ package jsonapi
 
 import (
 	"errors"
-	"github.com/vloryan/go-libs/httpx/router"
 	"io"
 	"net/http"
+
+	"github.com/vloryan/go-libs/httpx/router"
 )
 
 var APIBinding = jsonAPIBinding{}

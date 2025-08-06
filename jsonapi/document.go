@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/vloryan/go-libs/sqlx/pagination"
 	"net/url"
 	"reflect"
 	"slices"
 	"strings"
+
+	"github.com/vloryan/go-libs/sqlx/pagination"
 
 	"github.com/vloryan/go-libs/reflectx"
 )
@@ -345,6 +346,7 @@ func NewDocumentData[T any](v any, self string) *DocumentData[T] {
 		Items: items,
 	}
 }
+
 func joinUrl(base string, p ...string) string {
 	r, _ := url.JoinPath(base, p...)
 	return r

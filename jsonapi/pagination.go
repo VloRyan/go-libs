@@ -1,10 +1,11 @@
 package jsonapi
 
 import (
-	"github.com/vloryan/go-libs/httpx"
-	"github.com/vloryan/go-libs/sqlx/pagination"
 	"net/http"
 	"strings"
+
+	"github.com/vloryan/go-libs/httpx"
+	"github.com/vloryan/go-libs/sqlx/pagination"
 )
 
 var DefaultPageLimit = 25
