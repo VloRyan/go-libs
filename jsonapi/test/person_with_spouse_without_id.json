@@ -7,7 +7,19 @@
   "relationships": {
     "spouse": {
       "data": {
+        "lid": "person_815_1",
         "type": "person"
+      }
+    }
+  },
+  "meta" : {
+    "local-objects" : {
+      "person_815_1" : {
+        "type" : "person",
+        "lid" : "person_815_1",
+        "attributes" : {
+          "name" : "Georg Weber"
+        }
       }
     }
   }

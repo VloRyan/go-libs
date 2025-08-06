@@ -35,6 +35,27 @@ type ResourceObject struct {
 	Meta          MetaData                       `json:"meta,omitempty"`
 }
 
+func (r *ResourceObject) LocalObjects() map[string]*ResourceObject {
+	if r.Meta == nil {
+		return nil
+	}
+	if v, ok := r.Meta["local-objects"]; ok {
+		return v.(map[string]*ResourceObject)
+	}
+	return nil
+}
+
+func (r *ResourceObject) SetLocalObjects(m map[string]*ResourceObject) {
+	if r.Meta == nil {
+		r.Meta = MetaData{}
+	}
+	if m != nil {
+		r.Meta["local-objects"] = m
+	} else {
+		delete(r.Meta, "local-objects")
+	}
+}
+
 func (d *Document) NewResourceObject(id, typeStr string) *ResourceObject {
 	return &ResourceObject{
 		ResourceIdentifierObject: ResourceIdentifierObject{

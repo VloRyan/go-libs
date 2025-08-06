@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vloryan/go-libs/testhelper"
@@ -100,6 +102,7 @@ func TestMarshalResourceObject(t *testing.T) {
 		args        any
 		fieldFilter ResourceObjectFieldFilterFunc
 		wantErr     bool
+		locals      map[string]*ResourceObject
 	}{{
 		name:     "person",
 		fileName: "./test/person.json",
@@ -134,6 +137,13 @@ func TestMarshalResourceObject(t *testing.T) {
 		name:     "person with spouse without id",
 		fileName: "./test/person_with_spouse_without_id.json",
 		args:     &testPerson{ID: 815, Type: "person", Name: "Hanna Weber", Spouse: &testPerson{Type: "person", Name: "Georg Weber"}},
+		locals: map[string]*ResourceObject{"person_815_1": {
+			ResourceIdentifierObject: ResourceIdentifierObject{LID: "person_815_1", Type: "person"},
+			Attributes:               map[string]any{"name": "Georg Weber"},
+			Relationships:            make(map[string]*RelationshipObject),
+			Links:                    make(map[string]any),
+			Meta:                     make(MetaData),
+		}},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -149,6 +159,10 @@ func TestMarshalResourceObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			assert.JSONEq(t, want, string(gotJson), "marshalling different")
+
+			if diff := cmp.Diff(tt.locals, obj.LocalObjects()); diff != "" {
+				t.Errorf("MarshalResourceObject() mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }

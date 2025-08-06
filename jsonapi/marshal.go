@@ -75,6 +75,7 @@ func identifier(v any) (*ResourceIdentifierObject, bool) {
 
 func mapStructFields(obj *ResourceObject, rv reflect.Value, path string, fieldNameFunc ResourceObjectFieldFilterFunc) error {
 	t := rv.Type()
+	lidCounter := 0
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
 		if path == "" && slices.Contains(reservedAttribNames, strings.ToLower(sf.Name)) ||
@@ -120,6 +121,16 @@ func mapStructFields(obj *ResourceObject, rv reflect.Value, path string, fieldNa
 				resObj, err := toResourceObject(fv.Interface(), fieldNameFunc)
 				if err != nil {
 					return err
+				}
+				if resObj.ID == "" {
+					lidCounter++
+					resObj.LID = obj.Type + "_" + obj.ID + "_" + strconv.Itoa(lidCounter)
+					localObject := obj.LocalObjects()
+					if localObject == nil {
+						localObject = make(map[string]*ResourceObject)
+						obj.SetLocalObjects(localObject)
+					}
+					localObject[resObj.LID] = resObj
 				}
 				name := joinPath(path, attribName(sf))
 				obj.Relationships[name] = &RelationshipObject{Data: &resObj.ResourceIdentifierObject}
