@@ -155,71 +155,99 @@ func TestGenericHandler_resolveIncludes(t *testing.T) {
 		includes      []string
 		relationships map[string]*RelationshipObject
 		resolveMap    map[string]*ResourceObject
+		locals        map[string]*ResourceObject
 		want          []*ResourceObject
 	}
-	tests := []testCase{
-		{
-			name:     "comments",
-			includes: []string{"comments"},
-			relationships: map[string]*RelationshipObject{
-				"comments": {Data: &ResourceIdentifierObject{ID: "5", Type: "comments"}},
+	tests := []testCase{{
+		name:     "comments",
+		includes: []string{"comments"},
+		relationships: map[string]*RelationshipObject{
+			"comments": {Data: &ResourceIdentifierObject{ID: "5", Type: "comments"}},
+		},
+		resolveMap: map[string]*ResourceObject{
+			"5": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"}},
+		},
+		want: []*ResourceObject{{
+			ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"},
+		}},
+	}, {
+		name:     "comments.author",
+		includes: []string{"comments.author"},
+		relationships: map[string]*RelationshipObject{
+			"comments": {
+				Data: []*ResourceIdentifierObject{
+					{ID: "5", Type: "comments"},
+					{ID: "12", Type: "comments"},
+				},
 			},
-			resolveMap: map[string]*ResourceObject{
-				"5": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"}},
-			},
-			want: []*ResourceObject{{
+		},
+		resolveMap: map[string]*ResourceObject{
+			"9": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "9", Type: "author"}},
+			"5": {
 				ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"},
-			}},
-		},
-		{
-			name:     "comments.author",
-			includes: []string{"comments.author"},
-			relationships: map[string]*RelationshipObject{
-				"comments": {
-					Data: []*ResourceIdentifierObject{
-						{ID: "5", Type: "comments"},
-						{ID: "12", Type: "comments"},
-					},
-				},
+				Relationships: map[string]*RelationshipObject{"author": {
+					Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
+				}},
 			},
-			resolveMap: map[string]*ResourceObject{
-				"9": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "9", Type: "author"}},
-				"5": {
-					ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"},
-					Relationships: map[string]*RelationshipObject{"author": {
-						Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
-					}},
-				},
-				"12": {
-					ResourceIdentifierObject: ResourceIdentifierObject{ID: "12", Type: "comments"},
-					Relationships: map[string]*RelationshipObject{"author": {
-						Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
-					}},
-				},
-			},
-			want: []*ResourceObject{
-				{ResourceIdentifierObject: ResourceIdentifierObject{ID: "9", Type: "author"}},
-				{
-					ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"},
-					Relationships: map[string]*RelationshipObject{"author": {
-						Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
-					}},
-				},
-				{
-					ResourceIdentifierObject: ResourceIdentifierObject{ID: "12", Type: "comments"},
-					Relationships: map[string]*RelationshipObject{"author": {
-						Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
-					}},
-				},
+			"12": {
+				ResourceIdentifierObject: ResourceIdentifierObject{ID: "12", Type: "comments"},
+				Relationships: map[string]*RelationshipObject{"author": {
+					Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
+				}},
 			},
 		},
-	}
+		want: []*ResourceObject{
+			{
+				ResourceIdentifierObject: ResourceIdentifierObject{ID: "5", Type: "comments"},
+				Relationships: map[string]*RelationshipObject{"author": {
+					Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
+				}},
+			},
+			{ResourceIdentifierObject: ResourceIdentifierObject{ID: "9", Type: "author"}},
+			{
+				ResourceIdentifierObject: ResourceIdentifierObject{ID: "12", Type: "comments"},
+				Relationships: map[string]*RelationshipObject{"author": {
+					Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
+				}},
+			},
+		},
+	}, {
+		name:     "resolve from lid",
+		includes: []string{"comments.author"},
+		relationships: map[string]*RelationshipObject{
+			"comments": {
+				Data: []*ResourceIdentifierObject{{LID: "default.type_0_1", Type: "comments"}},
+			},
+		},
+		resolveMap: map[string]*ResourceObject{
+			"9": {ResourceIdentifierObject: ResourceIdentifierObject{ID: "9", Type: "author"}},
+		},
+		locals: map[string]*ResourceObject{
+			"default.type_0_1": {
+				ResourceIdentifierObject: ResourceIdentifierObject{LID: "default.type_0_1", Type: "comments"},
+				Attributes:               map[string]any{"text": "Success if you can read me"},
+				Relationships: map[string]*RelationshipObject{"author": {
+					Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
+				}},
+			},
+		},
+		want: []*ResourceObject{
+			{
+				ResourceIdentifierObject: ResourceIdentifierObject{LID: "default.type_0_1", Type: "comments"},
+				Attributes:               map[string]any{"text": "Success if you can read me"},
+				Relationships: map[string]*RelationshipObject{"author": {
+					Data: &ResourceIdentifierObject{ID: "9", Type: "author"},
+				}},
+			}, {ResourceIdentifierObject: ResourceIdentifierObject{ID: "9", Type: "author"}},
+		},
+	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := GenericHandler[*Item]{}
 			obj := &ResourceObject{
 				ResourceIdentifierObject: ResourceIdentifierObject{ID: "0", Type: "default.type"},
 				Relationships:            tt.relationships,
+				Meta:                     MetaData{"local-objects": tt.locals},
 			}
 
 			doc := &Document{

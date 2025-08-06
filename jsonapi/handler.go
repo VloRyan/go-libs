@@ -126,6 +126,13 @@ func (h *GenericHandler[T]) NewDoc(req *http.Request, data *DocumentData[T]) *Do
 			}
 		}
 	}
+	/* clean up metadata */
+	if err := ForEachElem(doc.Data, func(e *ResourceObject) error {
+		e.SetLocalObjects(nil)
+		return nil
+	}); err != nil {
+		return h.NewErrorDoc(err)
+	}
 
 	for k, v := range data.MetaData {
 		doc.Meta[k] = v
@@ -151,6 +158,14 @@ func (h *GenericHandler[T]) resolveIncludes(resolverFunc resolveObjectFunc, incl
 	resolvedCache := make(map[string]*ResourceObject)
 	var resolvedObjects []*ResourceObject
 	relationships := doc.Relationships()
+	if err := ForEachElem(doc.Data, func(e *ResourceObject) error {
+		for k, v := range e.LocalObjects() {
+			resolvedCache[k] = v
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
 	for _, include := range includes {
 		objs, err := h.resolveInclude(resolverFunc, relationships, include, resolvedCache)
 		if err != nil {
@@ -160,7 +175,14 @@ func (h *GenericHandler[T]) resolveIncludes(resolverFunc resolveObjectFunc, incl
 			resolvedObjects = append(resolvedObjects, objs...)
 		}
 	}
-	doc.Included = resolvedObjects
+	resolvedObjectSet := make([]*ResourceObject, 0, len(resolvedObjects))
+	for _, obj := range resolvedObjects {
+		if slices.Contains(resolvedObjectSet, obj) {
+			continue
+		}
+		resolvedObjectSet = append(resolvedObjectSet, obj)
+	}
+	doc.Included = resolvedObjectSet
 	return nil
 }
 
@@ -178,15 +200,33 @@ func (h *GenericHandler[T]) resolveInclude(resolverFunc resolveObjectFunc, relat
 		nextPart = include[len(matchedPath)+1:]
 	}
 	if err := ForEachElem(relations, func(e *ResourceIdentifierObject) error {
-		cacheKey := e.ID + e.Type
-		if _, found := cache[cacheKey]; found {
+		var cacheKey string
+		if e.ID != "" {
+			cacheKey = e.ID + e.Type
+		} else {
+			if e.LID == "" {
+				return NewError(http.StatusInternalServerError, "relation has no id", nil)
+			}
+			cacheKey = e.LID
+		}
+		var resolvedObj *ResourceObject
+		if cachedObj, found := cache[cacheKey]; found {
+			resolvedObj = cachedObj
+		} else {
+			var err *Error
+			resolvedObj, err = resolverFunc(e)
+			if err != nil {
+				return err
+			}
+			if resolvedObj != nil {
+				cache[cacheKey] = resolvedObj
+			}
+		}
+		if resolvedObj == nil {
 			return nil
 		}
-		resolvedObj, err := resolverFunc(e)
-		if err != nil || resolvedObj == nil {
-			return err
-		}
-		cache[cacheKey] = resolvedObj
+		resolvedObjects = append(resolvedObjects, resolvedObj)
+
 		if nextPart != "" {
 			flatResIds := make(map[string][]*ResourceIdentifierObject)
 			for k, v := range resolvedObj.Relationships {
@@ -205,7 +245,6 @@ func (h *GenericHandler[T]) resolveInclude(resolverFunc resolveObjectFunc, relat
 				resolvedObjects = append(resolvedObjects, objs...)
 			}
 		}
-		resolvedObjects = append(resolvedObjects, resolvedObj)
 		return nil
 	}); err != nil {
 		return nil, NewError(500, "include failed", err)
