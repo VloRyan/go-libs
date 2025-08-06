@@ -77,7 +77,11 @@ type testPerson struct {
 }
 
 func (p *testPerson) GetIdentifier() *ResourceIdentifierObject {
-	return &ResourceIdentifierObject{ID: strconv.Itoa(int(p.ID)), Type: p.Type}
+	id := ""
+	if p.ID != 0 {
+		id = strconv.Itoa(int(p.ID))
+	}
+	return &ResourceIdentifierObject{ID: id, Type: p.Type}
 }
 
 func (p *testPerson) SetIdentifier(id *ResourceIdentifierObject) {
@@ -126,6 +130,10 @@ func TestMarshalResourceObject(t *testing.T) {
 		name:     "fieldMarshaler",
 		fileName: "./test/field_marshaler.json",
 		args:     &object{ID: "1", Type: "object", Field: &fieldMarshaler{ID: "4711", Type: "fieldMarshaler"}},
+	}, {
+		name:     "person with spouse without id",
+		fileName: "./test/person_with_spouse_without_id.json",
+		args:     &testPerson{ID: 815, Type: "person", Name: "Hanna Weber", Spouse: &testPerson{Type: "person", Name: "Georg Weber"}},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

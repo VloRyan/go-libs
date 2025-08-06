@@ -1,0 +1,15 @@
+{
+  "id": "815",
+  "type": "person",
+  "attributes": {
+    "name": "Hanna Weber"
+  },
+  "relationships": {
+    "spouse": {
+      "data": {
+        "type": "person"
+      }
+    }
+  }
+}
+
