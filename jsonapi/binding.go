@@ -4,40 +4,34 @@ import (
 	"errors"
 	"io"
 	"net/http"
-
-	"github.com/vloryan/go-libs/httpx/router"
 )
 
-var APIBinding = jsonAPIBinding{}
+var Binding = binding{}
 
-type jsonAPIBinding struct{}
+type binding struct{}
 
-func (j jsonAPIBinding) Name() string {
+func (b binding) Name() string {
 	return "json:api"
 }
 
-func (j jsonAPIBinding) Bind(req *http.Request, obj any) error {
+func (b binding) Bind(req *http.Request, obj any) error {
 	if req == nil || req.Body == nil {
 		return errors.New("invalid request")
 	}
 	d := NewDocument()
-	if err := j.BindDocument(req, d); err != nil {
+	if err := b.BindDocument(req, d); err != nil {
 		return err
 	}
 	return d.MapData(obj)
 }
 
-func (j jsonAPIBinding) BindDocument(req *http.Request, doc *Document) error {
+func (b binding) BindDocument(req *http.Request, doc *Document) error {
 	if req == nil || req.Body == nil {
 		return errors.New("invalid request")
 	}
-	b, err := io.ReadAll(req.Body)
+	bytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}
-	return doc.UnmarshalJSON(b)
-}
-
-type ResourceHandler interface {
-	RegisterRoutes(route router.RouteElement)
+	return doc.UnmarshalJSON(bytes)
 }

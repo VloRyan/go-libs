@@ -1,5 +1,11 @@
 package jsonapi
 
+import "github.com/vloryan/go-libs/httpx/router"
+
+type ResourceHandler interface {
+	RegisterRoutes(route router.RouteElement)
+}
+
 type ResourceIdentifierSource interface {
 	GetIdentifier() *ResourceIdentifierObject
 }
