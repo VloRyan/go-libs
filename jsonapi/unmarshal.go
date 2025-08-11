@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
-	"time"
-
 	"github.com/vloryan/go-libs/reflectx"
+	"reflect"
+	"strings"
+	"time"
 )
 
 func UnmarshalResourceObject(obj *ResourceObject, includes []*ResourceObject, v any) error {
@@ -43,21 +43,46 @@ func mapAttribs(attribs map[string]any, v any) error {
 		if !field.IsValid() {
 			continue
 		}
+		ft := reflectx.DeRef(field.Type())
+		at := reflect.TypeOf(attrib)
+		value := attrib
 
-		if unmarshaler, ok := field.Addr().Interface().(json.Unmarshaler); ok {
-			b, err := json.Marshal(attrib)
-			if err != nil {
-				return err
-			}
-			if err := unmarshaler.UnmarshalJSON(b); err != nil {
-				return err
+		var unmarshaler json.Unmarshaler
+		if field.Type().Kind() == reflect.Ptr {
+			field.Set(reflect.New(ft))
+			unmarshaler, _ = field.Interface().(json.Unmarshaler)
+		} else {
+			unmarshaler, _ = field.Addr().Interface().(json.Unmarshaler)
+		}
+		if unmarshaler != nil {
+			if ft == reflect.TypeOf(time.Time{}) && at.Kind() == reflect.String {
+				if sf, found := reflectx.TypeOf(v, true).FieldByNameFunc(func(s string) bool {
+					return strings.EqualFold(s, name)
+				}); found {
+					if err := reflectx.SetTimeField(value.(string), sf, field); err != nil {
+						return err
+					}
+				} else {
+					b, err := json.Marshal(attrib)
+					if err != nil {
+						return err
+					}
+					if err := unmarshaler.UnmarshalJSON(b); err != nil {
+						return err
+					}
+				}
+			} else {
+				b, err := json.Marshal(attrib)
+				if err != nil {
+					return err
+				}
+				if err := unmarshaler.UnmarshalJSON(b); err != nil {
+					return err
+				}
 			}
 			continue
 		}
 
-		ft := reflectx.DeRef(field.Type())
-		at := reflect.TypeOf(attrib)
-		value := attrib
 		if at.Kind() == reflect.Map {
 			if ft.Kind() == reflect.Map {
 				if ft.Key().Kind() != at.Key().Kind() {
@@ -99,13 +124,6 @@ func mapAttribs(attribs map[string]any, v any) error {
 			if err := mapAttribs(attrib.(map[string]any), value); err != nil {
 				return err
 			}
-		}
-		if ft == reflect.TypeOf(time.Time{}) && at.Kind() == reflect.String {
-			t, err := time.Parse(time.RFC3339, value.(string))
-			if err != nil {
-				return err
-			}
-			value = t
 		}
 		if at.Kind() == reflect.Slice {
 			sv := reflect.ValueOf(value)

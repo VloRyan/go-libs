@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func FindField(v any, path string) reflect.Value {
@@ -139,4 +140,37 @@ func setFieldValue(field reflect.Value, rv reflect.Value) bool {
 
 func Tag(s reflect.StructField, name string) FieldTag {
 	return ParseTag(s.Tag.Get(name))
+}
+
+func SetTimeField(val string, structField reflect.StructField, value reflect.Value) error {
+	timeFormat := structField.Tag.Get("time_format")
+	switch strings.ToLower(timeFormat) {
+	case "dateonly":
+		timeFormat = time.DateOnly
+	case "timeonly":
+		timeFormat = time.TimeOnly
+	case "datetime":
+		timeFormat = time.DateTime
+	case "":
+		timeFormat = time.RFC3339
+	}
+
+	if val == "" {
+		value.Set(reflect.ValueOf(time.Time{}))
+		return nil
+	}
+
+	t, err := time.Parse(timeFormat, val)
+	if err != nil {
+		return err
+	}
+	if value.Type().Kind() == reflect.Ptr {
+		if value.IsNil() {
+			value.Set(reflect.New(value.Type().Elem()))
+		}
+		value.Elem().Set(reflect.ValueOf(t))
+	} else {
+		value.Set(reflect.ValueOf(t))
+	}
+	return nil
 }
