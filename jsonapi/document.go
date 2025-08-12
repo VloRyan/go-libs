@@ -146,8 +146,15 @@ func (d *Document) Relationships() map[string][]*ResourceIdentifierObject {
 	m := make(map[string][]*ResourceIdentifierObject)
 	_ = ForEachElem(d.Data, func(e *ResourceObject) error {
 		for k, v := range e.Relationships {
+			if v.Data == nil {
+				_, ok := m[k]
+				if !ok {
+					m[k] = nil
+				}
+				continue
+			}
 			data, ok := m[k]
-			if !ok {
+			if !ok || data == nil {
 				data = make([]*ResourceIdentifierObject, 0)
 			}
 			if reflect.TypeOf(v.Data).Kind() == reflect.Slice {
