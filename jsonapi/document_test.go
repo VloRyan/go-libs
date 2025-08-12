@@ -101,3 +101,41 @@ func TestMapData(t *testing.T) {
 		})
 	}
 }
+
+func TestRelationships(t *testing.T) {
+	tests := []struct {
+		name     string
+		fileName string
+		want     map[string][]*ResourceIdentifierObject
+	}{{
+		name: "without_relationships",
+		want: map[string][]*ResourceIdentifierObject{},
+	}, {
+		name: "one_to_one",
+		want: map[string][]*ResourceIdentifierObject{"one": {{ID: "2", Type: "object"}}},
+	}, {
+		name: "one_to_many",
+		want: map[string][]*ResourceIdentifierObject{"many": {{ID: "2", Type: "object"}, {ID: "3", Type: "other"}}},
+	}, {
+		name: "null",
+		want: map[string][]*ResourceIdentifierObject{"null": nil},
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := NewDocument()
+			fileName := tt.fileName
+			if fileName == "" {
+				fileName = "document_" + tt.name + ".json"
+			}
+			err := json.Unmarshal([]byte(testhelper.ReadJson(t, "./test/relationships/"+fileName)), doc)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(doc.Relationships(), tt.want); diff != "" {
+				t.Errorf("Relationships() mismatch (-want +got):\n%s", diff)
+			}
+
+		})
+	}
+}

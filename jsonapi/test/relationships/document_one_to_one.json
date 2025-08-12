@@ -1,0 +1,14 @@
+{
+  "data": {
+    "id": "1",
+    "type": "object",
+    "relationships": {
+      "one": {
+        "data": {
+          "id": "2",
+          "type": "object"
+        }
+      }
+    }
+  }
+}

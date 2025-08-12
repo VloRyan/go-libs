@@ -1,0 +1,17 @@
+{
+  "data": {
+    "id": "1",
+    "type": "object",
+    "relationships": {
+      "many": {
+        "data":  [{
+          "id": "2",
+          "type": "object"
+        },{
+          "id": "3",
+          "type": "other"
+        }]
+      }
+    }
+  }
+}

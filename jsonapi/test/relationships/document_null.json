@@ -1,0 +1,11 @@
+{
+  "data": {
+    "id": "1",
+    "type": "object",
+    "relationships": {
+      "null": {
+        "data": null
+      }
+    }
+  }
+}
