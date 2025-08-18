@@ -43,6 +43,7 @@ func StreamFileAndReplaceToken(w http.ResponseWriter, dir fs.FS, file, old, new 
 
 	for i > 0 {
 		s := strings.ReplaceAll(string(b[:i]), old, new)
+		i = len(s)
 		if i > len(old) {
 			if partialMatch := stringx.MatchPartial(s[i-len(old):], old); partialMatch > 0 {
 				nextBytes := make([]byte, len(old)-partialMatch)
@@ -56,9 +57,10 @@ func StreamFileAndReplaceToken(w http.ResponseWriter, dir fs.FS, file, old, new 
 			}
 		}
 		b = []byte(s)
-		i = len(s)
-		if _, err := w.Write(b[:i]); err != nil {
-			panic(err)
+		if _, err = w.Write(b[:i]); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Write file failed: " + err.Error()))
+			return
 		}
 		i, err = f.Read(b)
 		if err != nil && !errors.Is(err, io.EOF) {
