@@ -18,14 +18,14 @@ func IsClientErrorStatus(statusCode int) bool {
 
 func StreamFileAndReplaceToken(w http.ResponseWriter, dir fs.FS, file, old, new string) {
 	f, err := dir.Open(file)
-	defer func(f fs.File) {
-		_ = f.Close()
-	}(f)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("Read file failed: " + err.Error()))
 		return
 	}
+	defer func(f fs.File) {
+		_ = f.Close()
+	}(f)
 	b := make([]byte, 2048)
 	i, err := f.Read(b)
 	if err != nil && !errors.Is(err, io.EOF) {
