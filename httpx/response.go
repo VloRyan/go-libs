@@ -6,8 +6,6 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
-
-	"github.com/vloryan/go-libs/stringx"
 )
 
 func IsOkStatus(statusCode int) bool {
@@ -44,7 +42,8 @@ func StreamFileAndReplaceToken(w http.ResponseWriter, dir fs.FS, file, old, new 
 	for i > 0 {
 		s := strings.ReplaceAll(string(b[:i]), old, new)
 		i = len(s)
-		if i > len(old) {
+		// TODO handling if old is in two chunks
+		/*if i > len(old) {
 			if partialMatch := stringx.MatchPartial(s[i-len(old):], old); partialMatch > 0 {
 				nextBytes := make([]byte, len(old)-partialMatch)
 				nextBytesRead, err := f.Read(nextBytes)
@@ -55,7 +54,7 @@ func StreamFileAndReplaceToken(w http.ResponseWriter, dir fs.FS, file, old, new 
 				}
 				s = strings.Replace(s+string(nextBytes[:nextBytesRead]), old, new, 1)
 			}
-		}
+		}*/
 		b = []byte(s)
 		if _, err = w.Write(b[:i]); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
