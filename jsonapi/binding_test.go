@@ -3,10 +3,11 @@ package jsonapi
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testObject struct {
@@ -23,8 +24,8 @@ func (t *testObject) SetIdentifier(id *ResourceIdentifierObject) {
 	t.ID = id.ID
 	t.Type = id.Type
 }
-func Test_Binding_Bind(t *testing.T) {
 
+func Test_Binding_Bind(t *testing.T) {
 	tests := []struct {
 		name     string
 		bodyFunc func() io.Reader

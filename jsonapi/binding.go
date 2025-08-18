@@ -19,6 +19,7 @@ func (b binding) Bind(req *http.Request, obj any) error {
 		return doc.MapData(obj)
 	})
 }
+
 func (b binding) BindFunc(req *http.Request, bindFunc func(doc *Document) error) error {
 	if req == nil || req.Body == nil {
 		return errors.New("invalid request")

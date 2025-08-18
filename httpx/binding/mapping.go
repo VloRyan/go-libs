@@ -3,11 +3,12 @@ package binding
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vloryan/go-libs/reflectx"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/vloryan/go-libs/reflectx"
 )
 
 // setter tries to set value on a walking by fields of a struct

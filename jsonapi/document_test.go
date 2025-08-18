@@ -135,7 +135,6 @@ func TestRelationships(t *testing.T) {
 			if diff := cmp.Diff(doc.Relationships(), tt.want); diff != "" {
 				t.Errorf("Relationships() mismatch (-want +got):\n%s", diff)
 			}
-
 		})
 	}
 }
