@@ -21,16 +21,16 @@ func Ptr[T any](s T) *T {
 	return &s
 }
 
-func ReadJson(t *testing.T, file string) string {
-	jsonFile, err := os.Open(file)
+func ReadFile(t *testing.T, name string) string {
+	f, err := os.Open(name)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func(jsonFile *os.File) {
 		_ = jsonFile.Close()
-	}(jsonFile)
+	}(f)
 
-	byteValue, err := io.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(f)
 	if err != nil {
 		t.Fatal(err)
 	}

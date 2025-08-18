@@ -101,7 +101,7 @@ func TestUnmarshalResourceObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			doc := NewDocument()
-			j := testhelper.ReadJson(t, tt.jsonFile)
+			j := testhelper.ReadFile(t, tt.jsonFile)
 			err := json.Unmarshal([]byte(j), doc)
 			if err != nil {
 				t.Fatal(err)

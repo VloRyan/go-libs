@@ -153,7 +153,7 @@ func TestMarshalResourceObject(t *testing.T) {
 				t.Errorf("MarshalResourceObject() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			want := testhelper.ReadJson(t, tt.fileName)
+			want := testhelper.ReadFile(t, tt.fileName)
 			gotJson, err := json.MarshalIndent(obj, "", "  ")
 			if err != nil {
 				t.Fatal(err)

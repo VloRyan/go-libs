@@ -39,7 +39,7 @@ func TestSetObjectData(t *testing.T) {
 				t.Errorf("TestApplyData() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			want := testhelper.ReadJson(t, tt.fileName)
+			want := testhelper.ReadFile(t, tt.fileName)
 			gotJson, err := json.MarshalIndent(doc, "", "  ")
 			if err != nil {
 				t.Fatal(err)
@@ -77,7 +77,7 @@ func TestMapData(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			doc := NewDocument()
-			err := json.Unmarshal([]byte(testhelper.ReadJson(t, tt.fileName)), doc)
+			err := json.Unmarshal([]byte(testhelper.ReadFile(t, tt.fileName)), doc)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -127,7 +127,7 @@ func TestRelationships(t *testing.T) {
 			if fileName == "" {
 				fileName = "document_" + tt.name + ".json"
 			}
-			err := json.Unmarshal([]byte(testhelper.ReadJson(t, "./test/relationships/"+fileName)), doc)
+			err := json.Unmarshal([]byte(testhelper.ReadFile(t, "./test/relationships/"+fileName)), doc)
 			if err != nil {
 				t.Fatal(err)
 			}
