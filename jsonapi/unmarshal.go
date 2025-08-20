@@ -36,23 +36,28 @@ func mapAttribs(attribs map[string]any, v any) error {
 		return errors.New("mapAttribs only supports Structs, got: " + rv.String())
 	}
 
-	for name, attrib := range attribs {
-		if attrib == nil {
-			continue
-		}
+	for name, attrValue := range attribs {
+
 		field := reflectx.FindField(v, name)
 		if !field.IsValid() {
 			continue
 		}
 		ft := reflectx.DeRef(field.Type())
-		at := reflect.TypeOf(attrib)
-		value := attrib
+		at := reflect.TypeOf(attrValue)
+		value := attrValue
 
 		var unmarshaler json.Unmarshaler
 		if field.Type().Kind() == reflect.Ptr {
+			if attrValue == nil {
+				field.SetZero()
+				continue
+			}
 			field.Set(reflect.New(ft))
 			unmarshaler, _ = field.Interface().(json.Unmarshaler)
 		} else {
+			if attrValue == nil {
+				return errors.New("can not set nil value to non-pointer field " + name)
+			}
 			unmarshaler, _ = field.Addr().Interface().(json.Unmarshaler)
 		}
 		if unmarshaler != nil {
@@ -64,7 +69,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 						return err
 					}
 				} else {
-					b, err := json.Marshal(attrib)
+					b, err := json.Marshal(attrValue)
 					if err != nil {
 						return err
 					}
@@ -73,7 +78,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 					}
 				}
 			} else {
-				b, err := json.Marshal(attrib)
+				b, err := json.Marshal(attrValue)
 				if err != nil {
 					return err
 				}
@@ -90,7 +95,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 					return errors.New("mapAttribs only supports maps with same key type, got: " + ft.Key().String() + " expected: " + at.Key().String() + ")")
 				}
 				mv := reflect.MakeMap(ft)
-				av := reflect.ValueOf(attrib)
+				av := reflect.ValueOf(attrValue)
 				for _, key := range av.MapKeys() {
 					ev := reflect.ValueOf(av.MapIndex(key).Interface()) // for some reason valueOf(interface()) is needed to get the correct type
 					var nv reflect.Value
@@ -122,7 +127,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 				return errors.New("mapAttribs only supports Structs: " + ft.String())
 			}
 			value = reflect.New(ft).Interface()
-			if err := mapAttribs(attrib.(map[string]any), value); err != nil {
+			if err := mapAttribs(attrValue.(map[string]any), value); err != nil {
 				return err
 			}
 		}
