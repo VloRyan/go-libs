@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/vloryan/go-libs/sqlx/pagination"
 
 	"github.com/vloryan/go-libs/httpx"
 )
@@ -265,6 +266,55 @@ func TestGenericHandler_resolveIncludes(t *testing.T) {
 			}
 			if diff := cmp.Diff(tt.want, doc.Included); diff != "" {
 				t.Errorf("resolveIncludes() error mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGenericHandler_applyMetadata(t *testing.T) {
+	type testCase struct {
+		name string
+		page *pagination.Page
+		meta MetaData
+		want MetaData
+	}
+	tests := []testCase{{
+		name: "with meta data",
+		meta: map[string]any{"a": "va", "b": "vb"},
+		want: map[string]any{"a": "va", "b": "vb"},
+	}, {
+		name: "with page",
+		page: &pagination.Page{
+			Offset:     1,
+			Limit:      2,
+			Sort:       []string{"a", "b"},
+			TotalCount: 7,
+		},
+		want: map[string]any{"page[limit]": 2, "page[offset]": 1, "page[sort]": "a,b", "page[total]": 7},
+	}, {
+		name: "with page and meta data",
+		meta: map[string]any{"b": "vb"},
+		page: &pagination.Page{
+			Offset:     2,
+			Limit:      3,
+			Sort:       []string{"a", "b"},
+			TotalCount: 8,
+		},
+		want: map[string]any{"b": "vb", "page[limit]": 3, "page[offset]": 2, "page[sort]": "a,b", "page[total]": 8},
+	},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := GenericHandler[*Item]{}
+			doc := NewDocument()
+			data := &DocumentData[*Item]{
+				Page:     tt.page,
+				MetaData: tt.meta,
+			}
+			h.applyMetadata(doc, data)
+
+			if diff := cmp.Diff(tt.want, doc.Meta); diff != "" {
+				t.Errorf("applyMetadata() error mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

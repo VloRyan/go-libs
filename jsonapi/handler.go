@@ -102,6 +102,7 @@ func (h *GenericHandler[T]) NewDoc(req *http.Request, data *DocumentData[T]) *Do
 	}); err != nil {
 		return h.NewErrorDoc(err)
 	}
+
 	for i, item := range data.Items {
 		var obj *ResourceObject
 		if data.IsSlice {
@@ -140,12 +141,8 @@ func (h *GenericHandler[T]) NewDoc(req *http.Request, data *DocumentData[T]) *Do
 		return h.NewErrorDoc(err)
 	}
 
-	for k, v := range data.MetaData {
-		doc.Meta[k] = v
-	}
-	if data.Page != nil {
-		doc.Meta["page[totalCount]"] = data.Page.TotalCount
-	}
+	h.applyMetadata(doc, data)
+
 	return doc
 }
 
@@ -257,7 +254,17 @@ func (h *GenericHandler[T]) resolveInclude(resolverFunc resolveObjectFunc, relat
 	}
 	return resolvedObjects, nil
 }
-
+func (h *GenericHandler[T]) applyMetadata(doc *Document, data *DocumentData[T]) {
+	for k, v := range data.MetaData {
+		doc.Meta[k] = v
+	}
+	if data.Page != nil {
+		doc.Meta["page[limit]"] = data.Page.Limit
+		doc.Meta["page[offset]"] = data.Page.Offset
+		doc.Meta["page[sort]"] = strings.Join(data.Page.Sort, ",")
+		doc.Meta["page[total]"] = data.Page.TotalCount
+	}
+}
 func findRelationships(relationships map[string][]*ResourceIdentifierObject, name string) ([]*ResourceIdentifierObject, string) {
 	currentRelationships := relationships
 	var nextRelationships map[string][]*ResourceIdentifierObject
