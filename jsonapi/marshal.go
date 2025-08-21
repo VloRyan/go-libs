@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/vloryan/go-libs/reflectx"
 	"github.com/vloryan/go-libs/stringx"
@@ -16,8 +17,13 @@ import (
 type FieldMarshaler interface {
 	MarshalField(obj *ResourceObject, f reflect.StructField) error
 }
+type LIDGeneratorFunc func() string
 
 var reservedAttribNames = []string{"id", "type"}
+
+var LIDGenerator LIDGeneratorFunc = func() string {
+	return strconv.Itoa(int(time.Now().UnixNano()))
+}
 
 func MarshalResourceObject(data any, fieldFilterFunc ResourceObjectFieldFilterFunc) (*ResourceObject, error) {
 	if data == nil {
@@ -75,7 +81,7 @@ func identifier(v any) (*ResourceIdentifierObject, bool) {
 
 func mapStructFields(obj *ResourceObject, rv reflect.Value, path string, fieldNameFunc ResourceObjectFieldFilterFunc) error {
 	t := rv.Type()
-	lidCounter := 0
+	resourceLidCounter := 0
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
 		if path == "" && slices.Contains(reservedAttribNames, strings.ToLower(sf.Name)) ||
@@ -123,8 +129,14 @@ func mapStructFields(obj *ResourceObject, rv reflect.Value, path string, fieldNa
 					return err
 				}
 				if resObj.ID == "" {
-					lidCounter++
-					resObj.LID = obj.Type + "_" + obj.ID + "_" + strconv.Itoa(lidCounter)
+					if obj.ID != "" {
+						resObj.LID = obj.ID + "_" + strconv.Itoa(resourceLidCounter)
+					} else {
+						obj.LID = LIDGenerator()
+						resObj.LID = obj.LID + "_" + strconv.Itoa(resourceLidCounter)
+					}
+
+					resourceLidCounter++
 					localObject := obj.LocalObjects()
 					if localObject == nil {
 						localObject = make(map[string]*ResourceObject)

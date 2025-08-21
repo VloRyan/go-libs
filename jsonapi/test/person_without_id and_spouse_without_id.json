@@ -1,5 +1,5 @@
 {
-  "id": "815",
+  "lid": "4711",
   "type": "person",
   "attributes": {
     "name": "Hanna Weber"
@@ -7,16 +7,16 @@
   "relationships": {
     "spouse": {
       "data": {
-        "lid": "815_0",
+        "lid": "4711_0",
         "type": "person"
       }
     }
   },
   "meta": {
     "local-objects": {
-      "815_0": {
+      "4711_0": {
         "type": "person",
-        "lid": "815_0",
+        "lid": "4711_0",
         "attributes": {
           "name": "Georg Weber"
         }

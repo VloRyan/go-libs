@@ -15,6 +15,96 @@ import (
 	"github.com/vloryan/go-libs/testhelper"
 )
 
+func TestMarshalResourceObject(t *testing.T) {
+	tests := []struct {
+		name        string
+		fileName    string
+		args        any
+		fieldFilter ResourceObjectFieldFilterFunc
+		wantErr     bool
+		locals      map[string]*ResourceObject
+		lidGen      LIDGeneratorFunc
+	}{{
+		name:     "person",
+		fileName: "./test/person.json",
+		args:     &testPerson{ID: 4711, Type: "person", Name: "Hans Müller", Age: 47, Salary: 666.66, Birthday: testhelper.Ptr(testhelper.ParseTime(t, "1985-06-15T12:13:59Z"))},
+	}, {
+		name:     "person with spouse",
+		fileName: "./test/person_with_spouse.json",
+		args:     &testPerson{ID: 815, Type: "person", Name: "Hanna Weber", Spouse: &testPerson{ID: 816, Type: "person", Name: "Georg Weber"}},
+	}, {
+		name:     "person only age",
+		fileName: "./test/person_only_age.json",
+		args:     &testPerson{ID: 4711, Type: "person", Name: "Hans Müller", Age: 47, Salary: 666.66, Birthday: testhelper.Ptr(testhelper.ParseTime(t, "1985-06-15T12:13:59Z"))},
+		fieldFilter: func(t, f string) bool {
+			return strings.EqualFold(f, "age")
+		},
+	}, {
+		name:     "nested ref",
+		fileName: "./test/nested_ref.json",
+		args: &testPerson{
+			ID: 4711, Type: "person",
+			NestedRef: &objectWithRef{Name: "I am the object", Other: &ref{ID: "4711", Type: "Type1"}},
+			ChildrenNestedRef: []*objectWithRef{
+				{Name: "First", Other: &ref{ID: "4712", Type: "Type2"}},
+				{Name: "Second", Other: &ref{ID: "4713", Type: "Type3"}},
+			},
+		},
+	}, {
+		name:     "fieldMarshaler",
+		fileName: "./test/field_marshaler.json",
+		args:     &object{ID: "1", Type: "object", Field: &fieldMarshaler{ID: "4711", Type: "fieldMarshaler"}},
+	}, {
+		name:     "person with spouse without id",
+		fileName: "./test/person_with_spouse_without_id.json",
+		args:     &testPerson{ID: 815, Type: "person", Name: "Hanna Weber", Spouse: &testPerson{Type: "person", Name: "Georg Weber"}},
+		locals: map[string]*ResourceObject{"815_0": {
+			ResourceIdentifierObject: ResourceIdentifierObject{LID: "815_0", Type: "person"},
+			Attributes:               map[string]any{"name": "Georg Weber"},
+			Relationships:            make(map[string]*RelationshipObject),
+			Links:                    make(map[string]any),
+			Meta:                     make(MetaData),
+		}},
+	}, {
+		name:     "person without id and spouse without id",
+		fileName: "./test/person_without_id and_spouse_without_id.json",
+		args:     &testPerson{Type: "person", Name: "Hanna Weber", Spouse: &testPerson{Type: "person", Name: "Georg Weber"}},
+		locals: map[string]*ResourceObject{"4711_0": {
+			ResourceIdentifierObject: ResourceIdentifierObject{LID: "4711_0", Type: "person"},
+			Attributes:               map[string]any{"name": "Georg Weber"},
+			Relationships:            make(map[string]*RelationshipObject),
+			Links:                    make(map[string]any),
+			Meta:                     make(MetaData),
+		}},
+		lidGen: func() string {
+			return "4711"
+		},
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.lidGen != nil {
+				LIDGenerator = tt.lidGen
+			}
+			obj, err := MarshalResourceObject(tt.args, tt.fieldFilter)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalResourceObject() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			want := testhelper.ReadFile(t, tt.fileName)
+			gotJson, err := json.MarshalIndent(obj, "", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			assert.JSONEq(t, want, string(gotJson), "marshalling different")
+
+			if diff := cmp.Diff(tt.locals, obj.LocalObjects()); diff != "" {
+				t.Errorf("MarshalResourceObject() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 type object struct {
 	ID    string          `json:"id"`
 	Type  string          `json:"type"`
@@ -93,76 +183,4 @@ func (p *testPerson) SetIdentifier(id *ResourceIdentifierObject) {
 		p.ID = uint(u)
 	}
 	p.Type = id.Type
-}
-
-func TestMarshalResourceObject(t *testing.T) {
-	tests := []struct {
-		name        string
-		fileName    string
-		args        any
-		fieldFilter ResourceObjectFieldFilterFunc
-		wantErr     bool
-		locals      map[string]*ResourceObject
-	}{{
-		name:     "person",
-		fileName: "./test/person.json",
-		args:     &testPerson{ID: 4711, Type: "person", Name: "Hans Müller", Age: 47, Salary: 666.66, Birthday: testhelper.Ptr(testhelper.ParseTime(t, "1985-06-15T12:13:59Z"))},
-	}, {
-		name:     "person with spouse",
-		fileName: "./test/person_with_spouse.json",
-		args:     &testPerson{ID: 815, Type: "person", Name: "Hanna Weber", Spouse: &testPerson{ID: 816, Type: "person", Name: "Georg Weber"}},
-	}, {
-		name:     "person only age",
-		fileName: "./test/person_only_age.json",
-		args:     &testPerson{ID: 4711, Type: "person", Name: "Hans Müller", Age: 47, Salary: 666.66, Birthday: testhelper.Ptr(testhelper.ParseTime(t, "1985-06-15T12:13:59Z"))},
-		fieldFilter: func(t, f string) bool {
-			return strings.EqualFold(f, "age")
-		},
-	}, {
-		name:     "nested ref",
-		fileName: "./test/nested_ref.json",
-		args: &testPerson{
-			ID: 4711, Type: "person",
-			NestedRef: &objectWithRef{Name: "I am the object", Other: &ref{ID: "4711", Type: "Type1"}},
-			ChildrenNestedRef: []*objectWithRef{
-				{Name: "First", Other: &ref{ID: "4712", Type: "Type2"}},
-				{Name: "Second", Other: &ref{ID: "4713", Type: "Type3"}},
-			},
-		},
-	}, {
-		name:     "fieldMarshaler",
-		fileName: "./test/field_marshaler.json",
-		args:     &object{ID: "1", Type: "object", Field: &fieldMarshaler{ID: "4711", Type: "fieldMarshaler"}},
-	}, {
-		name:     "person with spouse without id",
-		fileName: "./test/person_with_spouse_without_id.json",
-		args:     &testPerson{ID: 815, Type: "person", Name: "Hanna Weber", Spouse: &testPerson{Type: "person", Name: "Georg Weber"}},
-		locals: map[string]*ResourceObject{"person_815_1": {
-			ResourceIdentifierObject: ResourceIdentifierObject{LID: "person_815_1", Type: "person"},
-			Attributes:               map[string]any{"name": "Georg Weber"},
-			Relationships:            make(map[string]*RelationshipObject),
-			Links:                    make(map[string]any),
-			Meta:                     make(MetaData),
-		}},
-	}}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			obj, err := MarshalResourceObject(tt.args, tt.fieldFilter)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("MarshalResourceObject() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			want := testhelper.ReadFile(t, tt.fileName)
-			gotJson, err := json.MarshalIndent(obj, "", "  ")
-			if err != nil {
-				t.Fatal(err)
-			}
-			assert.JSONEq(t, want, string(gotJson), "marshalling different")
-
-			if diff := cmp.Diff(tt.locals, obj.LocalObjects()); diff != "" {
-				t.Errorf("MarshalResourceObject() mismatch (-want +got):\n%s", diff)
-			}
-		})
-	}
 }
