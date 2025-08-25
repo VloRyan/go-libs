@@ -3,6 +3,9 @@ package reflectx
 import (
 	"reflect"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testStruct struct {
@@ -103,4 +106,74 @@ func TestSetFieldValue(t *testing.T) {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+type timeObject struct {
+	Time     time.Time
+	Date     time.Time `time_format:"DateOnly"`
+	Custom   time.Time `time_format:"02.01.2006 15:04:05"`
+	TimeOnly time.Time `time_format:"TimeOnly"`
+	TimePtr  *time.Time
+}
+
+func TestSetTimeField(t *testing.T) {
+	tests := []struct {
+		name        string
+		value       string
+		valueFormat string
+		field       string
+		wantErr     assert.ErrorAssertionFunc
+	}{{
+		name:    "RFC3339 Time",
+		value:   "2025-08-11T12:01:02Z",
+		field:   "Time",
+		wantErr: assert.NoError,
+	}, {
+		name:        "Date",
+		value:       "2025-08-11",
+		valueFormat: time.DateOnly,
+		field:       "Date",
+		wantErr:     assert.NoError,
+	}, {
+		name:    "With timezone",
+		value:   "2025-08-11T12:01:02+02:00",
+		field:   "Time",
+		wantErr: assert.NoError,
+	}, {
+		name:    "RFC3339 TimePtr",
+		value:   "2025-08-11T12:01:02Z",
+		field:   "TimePtr",
+		wantErr: assert.NoError,
+	}, {
+		name:        "Custom",
+		value:       "11.08.2025 12:01:02",
+		valueFormat: "02.01.2006 15:04:05",
+		field:       "Custom",
+		wantErr:     assert.NoError,
+	}, {
+		name:        "TimeOnly",
+		value:       "12:01:02",
+		valueFormat: "15:04:05",
+		field:       "TimeOnly",
+		wantErr:     assert.NoError,
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &timeObject{}
+			structField, _ := TypeOf(obj, true).FieldByName(tt.field)
+			fieldValue := ValueOf(obj, true).FieldByName(tt.field)
+			tt.wantErr(t, SetTimeField(tt.value, structField, fieldValue), "SetTimeField()")
+			timeFormat := tt.valueFormat
+			if timeFormat == "" {
+				timeFormat = time.RFC3339
+			}
+			parsedValue, err := time.Parse(timeFormat, tt.value)
+			if !tt.wantErr(t, err) {
+				t.Fatal(err)
+			}
+			if DeRefValue(fieldValue).Interface().(time.Time) != parsedValue {
+				t.Errorf("SetTimeField() want: %s, got: %s", parsedValue, fieldValue.Interface().(time.Time))
+			}
+		})
+	}
 }

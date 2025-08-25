@@ -1,0 +1,24 @@
+{
+  "id": "814",
+  "type": "person",
+  "attributes": {
+    "name": "Gunter Hammer"
+  },
+  "links": {
+    "self": "https://unit-test.net/person/814"
+  },
+  "relationships": {
+    "children": {
+      "data": [
+        {
+          "type": "person",
+          "id": "816"
+        },
+        {
+          "type": "person",
+          "id": "817"
+        }
+      ]
+    }
+  }
+}

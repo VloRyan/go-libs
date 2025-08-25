@@ -1,6 +1,8 @@
 package httpx
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func IsOkStatus(statusCode int) bool {
 	return statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices

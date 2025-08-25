@@ -1,0 +1,15 @@
+{
+  "atomic:operations": [
+    {
+      "op": "add",
+      "href": "/blogPosts",
+      "data": {
+        "id": "4711",
+        "type": "articles",
+        "attributes": {
+          "title": "JSON API paints my bikeshed!"
+        }
+      }
+    }
+  ]
+}

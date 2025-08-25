@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/vloryan/go-libs/reflectx"
 )
 
 // setter tries to set value on a walking by fields of a struct
@@ -114,7 +116,7 @@ func setWithProperType(val string, value reflect.Value, field reflect.StructFiel
 	case reflect.Struct:
 		switch value.Interface().(type) {
 		case time.Time:
-			return setTimeField(val, field, value)
+			return reflectx.SetTimeField(val, field, value)
 		}
 		return json.Unmarshal([]byte(val), value.Addr().Interface())
 	case reflect.Map:
@@ -131,9 +133,10 @@ func setIntField(val string, bitSize int, field reflect.Value) error {
 	}
 	intVal, err := strconv.ParseInt(val, 10, bitSize)
 	if err != nil {
-		field.SetInt(intVal)
+		return err
 	}
-	return err
+	field.SetInt(intVal)
+	return nil
 }
 
 func setUintField(val string, bitSize int, field reflect.Value) error {
@@ -141,10 +144,11 @@ func setUintField(val string, bitSize int, field reflect.Value) error {
 		val = "0"
 	}
 	uintVal, err := strconv.ParseUint(val, 10, bitSize)
-	if err == nil {
-		field.SetUint(uintVal)
+	if err != nil {
+		return err
 	}
-	return err
+	field.SetUint(uintVal)
+	return nil
 }
 
 func setBoolField(val string, field reflect.Value) error {
@@ -152,10 +156,12 @@ func setBoolField(val string, field reflect.Value) error {
 		val = "false"
 	}
 	boolVal, err := strconv.ParseBool(val)
-	if err == nil {
-		field.SetBool(boolVal)
+	if err != nil {
+		return err
 	}
-	return err
+
+	field.SetBool(boolVal)
+	return nil
 }
 
 func setFloatField(val string, bitSize int, field reflect.Value) error {
@@ -163,59 +169,10 @@ func setFloatField(val string, bitSize int, field reflect.Value) error {
 		val = "0.0"
 	}
 	floatVal, err := strconv.ParseFloat(val, bitSize)
-	if err == nil {
-		field.SetFloat(floatVal)
-	}
-	return err
-}
-
-func setTimeField(val string, structField reflect.StructField, value reflect.Value) error {
-	timeFormat := structField.Tag.Get("time_format")
-	if timeFormat == "" {
-		timeFormat = time.RFC3339
-	}
-
-	switch tf := strings.ToLower(timeFormat); tf {
-	case "unix", "unixnano":
-		tv, err := strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			return err
-		}
-
-		d := time.Duration(1)
-		if tf == "unixnano" {
-			d = time.Second
-		}
-
-		t := time.Unix(tv/int64(d), tv%int64(d))
-		value.Set(reflect.ValueOf(t))
-		return nil
-	}
-
-	if val == "" {
-		value.Set(reflect.ValueOf(time.Time{}))
-		return nil
-	}
-
-	l := time.Local
-	if isUTC, _ := strconv.ParseBool(structField.Tag.Get("time_utc")); isUTC {
-		l = time.UTC
-	}
-
-	if locTag := structField.Tag.Get("time_location"); locTag != "" {
-		loc, err := time.LoadLocation(locTag)
-		if err != nil {
-			return err
-		}
-		l = loc
-	}
-
-	t, err := time.ParseInLocation(timeFormat, val, l)
 	if err != nil {
 		return err
 	}
-
-	value.Set(reflect.ValueOf(t))
+	field.SetFloat(floatVal)
 	return nil
 }
 

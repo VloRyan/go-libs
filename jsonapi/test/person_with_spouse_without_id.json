@@ -1,0 +1,27 @@
+{
+  "id": "815",
+  "type": "person",
+  "attributes": {
+    "name": "Hanna Weber"
+  },
+  "relationships": {
+    "spouse": {
+      "data": {
+        "lid": "815_0",
+        "type": "person"
+      }
+    }
+  },
+  "meta": {
+    "local-objects": {
+      "815_0": {
+        "type": "person",
+        "lid": "815_0",
+        "attributes": {
+          "name": "Georg Weber"
+        }
+      }
+    }
+  }
+}
+

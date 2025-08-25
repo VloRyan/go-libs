@@ -1,0 +1,12 @@
+{
+  "data": {
+    "id": "4711",
+    "type": "person",
+    "attributes": {
+      "birthday": null
+    }
+  },
+  "jsonapi": {
+    "version": "1.1"
+  }
+}

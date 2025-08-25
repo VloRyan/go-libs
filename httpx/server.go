@@ -3,13 +3,14 @@ package httpx
 import (
 	"context"
 	"fmt"
-	"github.com/vloryan/go-libs/stringx"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/vloryan/go-libs/stringx"
 )
 
 type Server struct {

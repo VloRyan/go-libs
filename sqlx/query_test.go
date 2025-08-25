@@ -1,8 +1,9 @@
 package sqlx
 
 import (
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/google/go-cmp/cmp"
 )
