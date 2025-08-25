@@ -9,3 +9,6 @@ lint:
 
 fmt:
 	gofumpt -l -w .
+
+fmt-check:
+	gofumpt -d .

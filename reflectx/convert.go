@@ -3,6 +3,7 @@ package reflectx
 import (
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 func Convert(v reflect.Value, t reflect.Type) (reflect.Value, bool) {
@@ -17,6 +18,33 @@ func Convert(v reflect.Value, t reflect.Type) (reflect.Value, bool) {
 		if ok {
 			if numVal.Type().ConvertibleTo(t) {
 				return numVal.Convert(t), true
+			}
+		}
+	}
+	if t.Kind() == reflect.Bool {
+		if v.CanInt() {
+			value := v.Int()
+			return reflect.ValueOf(value != 0), true
+		}
+		if v.CanUint() {
+			value := v.Uint()
+			return reflect.ValueOf(value != 0), true
+		}
+		if v.CanFloat() {
+			value := v.Float()
+			return reflect.ValueOf(value != 0.0), true
+		}
+		if v.Kind() == reflect.String {
+			value := strings.ToLower(v.String())
+			if strings.EqualFold(value, "true") ||
+				strings.EqualFold(value, "1") ||
+				strings.EqualFold(value, "on") {
+				return reflect.ValueOf(true), true
+			}
+			if strings.EqualFold(value, "false") ||
+				strings.EqualFold(value, "0") ||
+				strings.EqualFold(value, "off") {
+				return reflect.ValueOf(true), true
 			}
 		}
 	}

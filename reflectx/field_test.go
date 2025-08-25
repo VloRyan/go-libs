@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,6 +15,7 @@ type testStruct struct {
 	Uint      uint
 	Float     float64
 	String    string
+	Bool      bool
 	IntPtr    *int
 	UintPtr   *uint
 	FloatPtr  *float64
@@ -64,6 +66,7 @@ func TestSetFieldValue(t *testing.T) {
 	tests := []struct {
 		fieldName string
 		value     any
+		expected  any
 		wantErr   bool
 	}{
 		// Direct
@@ -79,18 +82,23 @@ func TestSetFieldValue(t *testing.T) {
 		{fieldName: "Map", value: map[string]string{"Hallo": "Welt"}},
 
 		// Conversions
-		{fieldName: "Int", value: uint(4)},
-		{fieldName: "Int", value: 5.6},
-		{fieldName: "Uint", value: 3},
-		{fieldName: "Uint", value: 5.6},
-		{fieldName: "Float", value: 3},
-		{fieldName: "Float", value: uint(4)},
-		{fieldName: "String", value: 4},
-		{fieldName: "StringPtr", value: "Hallo world"},
-		{fieldName: "String", value: ptr("Hallo world")},
-		{fieldName: "Int", value: ptr(uint(4))},
-		{fieldName: "UintPtr", value: uint(4)},
-		{fieldName: "Int", value: "80"},
+		{fieldName: "Int", value: uint(4), expected: 4},
+		{fieldName: "Int", value: 5.6, expected: 5},
+		{fieldName: "Uint", value: 3, expected: uint(3)},
+		{fieldName: "Uint", value: 5.6, expected: uint(5)},
+		{fieldName: "Float", value: 3, expected: 3.0},
+		{fieldName: "Float", value: uint(4), expected: 4.0},
+		{fieldName: "String", value: 4, expected: "\x04"},
+		{fieldName: "StringPtr", value: "Hallo world", expected: ptr("Hallo world")},
+		{fieldName: "String", value: ptr("Hallo world"), expected: "Hallo world"},
+		{fieldName: "Int", value: ptr(uint(4)), expected: 4},
+		{fieldName: "UintPtr", value: uint(4), expected: ptr(uint(4))},
+		{fieldName: "Int", value: "80", expected: 80},
+		{fieldName: "Uint", value: "80", expected: uint(80)},
+		{fieldName: "Bool", value: 1, expected: true},
+		{fieldName: "Bool", value: uint(1), expected: true},
+		{fieldName: "Bool", value: float64(1), expected: true},
+		{fieldName: "Bool", value: "true", expected: true},
 	}
 	for _, tt := range tests {
 		t.Run(reflect.TypeOf(tt.value).String()+"->"+tt.fieldName, func(t *testing.T) {
@@ -99,6 +107,15 @@ func TestSetFieldValue(t *testing.T) {
 			field := sv.Elem().FieldByName(tt.fieldName)
 			if err := SetFieldValue(field, tt.value); (err != nil) != tt.wantErr {
 				t.Errorf("SetFieldValue() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			expected := reflect.ValueOf(tt.value)
+			ve := reflect.ValueOf(tt.expected)
+			if (ve.Kind() != reflect.Ptr && ve.IsValid() && !ve.IsZero()) ||
+				(ve.Kind() == reflect.Ptr && !ve.IsNil()) {
+				expected = ve
+			}
+			if diff := cmp.Diff(expected.Interface(), field.Interface()); diff != "" {
+				t.Errorf("SetFieldValue() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
