@@ -254,6 +254,7 @@ func (h *GenericHandler[T]) resolveInclude(resolverFunc resolveObjectFunc, relat
 	}
 	return resolvedObjects, nil
 }
+
 func (h *GenericHandler[T]) applyMetadata(doc *Document, data *DocumentData[T]) {
 	for k, v := range data.MetaData {
 		doc.Meta[k] = v
@@ -265,6 +266,7 @@ func (h *GenericHandler[T]) applyMetadata(doc *Document, data *DocumentData[T]) 
 		doc.Meta["page[total]"] = data.Page.TotalCount
 	}
 }
+
 func findRelationships(relationships map[string][]*ResourceIdentifierObject, name string) ([]*ResourceIdentifierObject, string) {
 	currentRelationships := relationships
 	var nextRelationships map[string][]*ResourceIdentifierObject
