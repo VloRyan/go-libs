@@ -19,7 +19,7 @@ type sqlQueryer interface {
 
 func Select(q sqlQueryer, dest any, query string, args ...any) error {
 	_query := query
-	paramArgs := args
+	var paramArgs []any
 	if len(args) > 0 {
 		var names []string
 		var err error
