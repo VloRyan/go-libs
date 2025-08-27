@@ -23,7 +23,7 @@ func TestEmptyCriteria_ToWhere(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.criteria.ToWhere("")
+			got := tt.criteria.ToWhere()
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("ToWhere() mismatch (-want +got):\n%s", diff)
 			}
@@ -85,7 +85,7 @@ func TestUnaryCriteria_ToWhere(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.criteria.ToWhere(tt.tableName)
+			got := tt.criteria.ToWhere()
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("ToWhere() mismatch (-want +got):\n%s", diff)
 			}
@@ -120,7 +120,7 @@ func TestNotCriteria_ToWhere(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.criteria.ToWhere("")
+			got := tt.criteria.ToWhere()
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("ToWhere() mismatch (-want +got):\n%s", diff)
 			}
@@ -157,7 +157,7 @@ func TestBinaryCriteria_ToWhere(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.criteria.ToWhere("")
+			got := tt.criteria.ToWhere()
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("ToWhere() mismatch (-want +got):\n%s", diff)
 			}

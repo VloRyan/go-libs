@@ -8,7 +8,7 @@ import (
 	"github.com/vloryan/go-libs/testhelper"
 )
 
-func TestColumnFilter(t *testing.T) {
+func TestTableFilter(t *testing.T) {
 	tests := []struct {
 		name    string
 		f       func() Criteria
@@ -17,51 +17,51 @@ func TestColumnFilter(t *testing.T) {
 	}{{
 		name: "eq",
 		f: func() Criteria {
-			return Field("field").Eq("test")
+			return NewTable("table").Column("field").Eq("test")
 		},
 		want: &UnaryCriteria{
 			OpType:     EqOp,
-			ColumnExpr: "field",
-			ValueExpr:  ":field",
-			Parameter:  map[string]any{"field": "test"},
+			ColumnExpr: "table.field",
+			ValueExpr:  ":table_field",
+			Parameter:  map[string]any{"table_field": "test"},
 		},
 	}, {
 		name: "lower",
 		f: func() Criteria {
-			return Field("field").ToLower().Eq("test")
+			return NewTable("table").Column("field").ToLower().Eq("test")
 		},
 		want: &UnaryCriteria{
 			OpType:     EqOp,
-			ColumnExpr: "LOWER(field)",
-			ValueExpr:  ":field",
-			Parameter:  map[string]any{"field": "test"},
+			ColumnExpr: "LOWER(table.field)",
+			ValueExpr:  ":table_field",
+			Parameter:  map[string]any{"table_field": "test"},
 		},
 	}, {
 		name: "asDate",
 		f: func() Criteria {
-			return Field("field").AsDate().Eq("test")
+			return NewTable("table").Column("field").AsDate().Eq("test")
 		},
 		want: &UnaryCriteria{
 			OpType:     EqOp,
-			ColumnExpr: "DATE(field)",
-			ValueExpr:  ":field",
-			Parameter:  map[string]any{"field": "test"},
+			ColumnExpr: "DATE(table.field)",
+			ValueExpr:  ":table_field",
+			Parameter:  map[string]any{"table_field": "test"},
 		},
 	}, {
 		name: "jsonb_extract",
 		f: func() Criteria {
-			return Field("field").JSONBExtract("$.A").Eq("test")
+			return NewTable("table").Column("field").JSONBExtract("$.A").Eq("test")
 		},
 		want: &UnaryCriteria{
 			OpType:     EqOp,
-			ColumnExpr: "jsonb_extract(field, '$.A')",
-			ValueExpr:  ":field",
-			Parameter:  map[string]any{"field": "test"},
+			ColumnExpr: "jsonb_extract(table.field, '$.A')",
+			ValueExpr:  ":table_field",
+			Parameter:  map[string]any{"table_field": "test"},
 		},
 	}, {
 		name: "custom func",
 		f: func() Criteria {
-			return Field("field").WithColumnFunc(func(columnExpr string, args ...any) string {
+			return NewTable("table").Column("field").WithColumnFunc(func(columnExpr string, args ...any) string {
 				var strArgs []string
 				for _, arg := range args {
 					strArgs = append(strArgs, arg.(string))
@@ -71,20 +71,20 @@ func TestColumnFilter(t *testing.T) {
 		},
 		want: &UnaryCriteria{
 			OpType:     EqOp,
-			ColumnExpr: "CUSTOM(field, 'a', 'b', 'c')",
-			ValueExpr:  ":field",
-			Parameter:  map[string]any{"field": "test"},
+			ColumnExpr: "CUSTOM(table.field, 'a', 'b', 'c')",
+			ValueExpr:  ":table_field",
+			Parameter:  map[string]any{"table_field": "test"},
 		},
 	}, {
 		name: "data compare",
 		f: func() Criteria {
-			return Field("field").AsDate().Eq(testhelper.FixedNow, AsDate)
+			return NewTable("table").Column("field").AsDate().Eq(testhelper.FixedNow, AsDate)
 		},
 		want: &UnaryCriteria{
 			OpType:     EqOp,
-			ColumnExpr: "DATE(field)",
-			ValueExpr:  "DATE(:field)",
-			Parameter:  map[string]any{"field": testhelper.FixedNow},
+			ColumnExpr: "DATE(table.field)",
+			ValueExpr:  "DATE(:table_field)",
+			Parameter:  map[string]any{"table_field": testhelper.FixedNow},
 		},
 	}}
 	for _, tt := range tests {

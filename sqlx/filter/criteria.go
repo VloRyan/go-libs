@@ -6,7 +6,7 @@ type Criteria interface {
 	Not() Criteria
 	And(c Criteria) Criteria
 	Or(c Criteria) Criteria
-	ToWhere(tableName string) Where
+	ToWhere() Where
 }
 
 type EmptyCriteria struct{}
@@ -23,7 +23,7 @@ func (c *EmptyCriteria) Or(Second Criteria) Criteria {
 	return Second
 }
 
-func (c *EmptyCriteria) ToWhere(string) Where {
+func (c *EmptyCriteria) ToWhere() Where {
 	return Where{}
 }
 
@@ -70,18 +70,18 @@ func (b *BinaryCriteria) Or(c Criteria) Criteria {
 	return or(b, c)
 }
 
-func (b *BinaryCriteria) ToWhere(tableName string) Where {
+func (b *BinaryCriteria) ToWhere() Where {
 	where := Where{
 		Parameter: make(map[string]any),
 	}
-	w1 := b.First.ToWhere(tableName)
+	w1 := b.First.ToWhere()
 	where.Clause = "(" + w1.Clause + ")"
 	if b.Conn == ConnOpAnd {
 		where.Clause += " AND "
 	} else {
 		where.Clause += " OR "
 	}
-	w2 := b.Second.ToWhere(tableName)
+	w2 := b.Second.ToWhere()
 	where.Clause += "(" + w2.Clause + ")"
 	for k, v := range w1.Parameter {
 		where.Parameter[k] = v
@@ -119,7 +119,7 @@ func (f *UnaryCriteria) Or(c Criteria) Criteria {
 	return or(f, c)
 }
 
-func (f *UnaryCriteria) ToWhere(tableName string) Where {
+func (f *UnaryCriteria) ToWhere() Where {
 	var op string
 	valueExpr := f.ValueExpr
 	switch f.OpType {
@@ -153,86 +153,9 @@ func (f *UnaryCriteria) ToWhere(tableName string) Where {
 	default:
 	}
 	where := Where{
-		Clause:    tableName + "." + f.ColumnExpr + " " + op + valueExpr,
+		Clause:    f.ColumnExpr + " " + op + valueExpr,
 		Parameter: f.Parameter,
 	}
-	/*tableField := toTableFieldName(f.ColumnName, tableName)
-	paramName := f.Name
-	switch f.ColumnFunction {
-	case Lower:
-		tableField = "LOWER(" + tableField + ")"
-	case JSONBExtract:
-		if len(f.ColumnFunctionArgs) != 1 {
-			return where // , errors.New("invalid json_extract args")
-		}
-		tableField = "jsonb_extract(" + tableField + ", '" + f.ColumnFunctionArgs[0] + "')"
-	case Date:
-		tableField = "DATE(" + tableField + ")"
-	}
-
-	where.Clause = tableField
-	switch f.OpType {
-	case ExistsOp:
-		where.Clause += " IS NOT NULL"
-	case EqOp:
-		if f.Value == nil {
-			where.Clause += " IS NULL"
-		} else {
-			where.Clause += " = :" + paramName
-			where.Parameter[paramName] = f.Value
-		}
-	case LikeOp:
-		where.Clause += " LIKE :" + paramName
-		where.Parameter[paramName] = "%" + f.Value.(string) + "%"
-	case ContainsOp:
-		where.Clause += " LIKE " + paramName
-		if f.Value != nil && reflect.TypeOf(f.Value).Kind() == reflect.Slice {
-			for _, p := range f.Value.([]any) {
-				where.Parameter[paramName] = "%" + p.(string) + "%"
-			}
-		} else {
-			where.Parameter[paramName] = "%" + f.Value.(string) + "%"
-		}
-	case InOp:
-		if reflect.TypeOf(f.Value).Kind() == reflect.Slice {
-			v := reflect.ValueOf(f.Value)
-			where.Clause += " IN("
-			for i := 0; i < v.Len(); i++ {
-				elemParamName := paramName + "_" + strconv.Itoa(i)
-				if i > 0 {
-					where.Clause += ", "
-				}
-				where.Clause += ":" + elemParamName
-				where.Parameter[elemParamName] = v.Index(i).Interface()
-			}
-			where.Clause += ")"
-		} else {
-			where.Clause += " = :" + paramName
-			where.Parameter[paramName] = f.Value
-		}
-	case GtOp:
-		where.Clause += " > :" + paramName
-		where.Parameter[paramName] = f.Value
-	case GtEqOp:
-		where.Clause += " >= :" + paramName
-		where.Parameter[paramName] = f.Value
-	case LtOp:
-		where.Clause += " < :" + paramName
-		where.Parameter[paramName] = f.Value
-	case LtEqOp:
-		where.Clause += " <= :" + paramName
-		where.Parameter[paramName] = f.Value
-	case BetweenOp:
-		if reflect.TypeOf(f.Value).Kind() != reflect.Slice {
-			return where
-		}
-		v := reflect.ValueOf(f.Value)
-		where.Clause += " BETWEEN :" + paramName + "_0 AND :" + paramName + "_1"
-		where.Parameter[paramName+"_0"] = v.Index(0).Interface()
-		where.Parameter[paramName+"_1"] = v.Index(1).Interface()
-	case FunctionOp:
-	case NoneOp:
-	}*/
 	return where
 }
 
@@ -252,9 +175,9 @@ func (n *NotCriteria) Or(c Criteria) Criteria {
 	return or(n, c)
 }
 
-func (n *NotCriteria) ToWhere(tableName string) Where {
+func (n *NotCriteria) ToWhere() Where {
 	where := Where{}
-	w := n.C.ToWhere(tableName)
+	w := n.C.ToWhere()
 	where.Clause = "NOT (" + w.Clause + ")"
 	if w.Parameter != nil {
 		where.Parameter = w.Parameter

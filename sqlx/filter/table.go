@@ -20,9 +20,13 @@ var (
 type (
 	ColumnFunctionFunc func(columnExpr string, args ...any) string
 	ValueDecorator     func(valueExpr string) string
-	ColumnFilter       struct {
+	TableFilter        struct {
+		Name string
+	}
+	ColumnFilter struct {
 		/*a.k.a ColumnName*/
 		Name               string
+		TableName          string
 		ColumnFunction     ColumnFunctionFunc
 		ColumnFunctionArgs []any
 	}
@@ -32,12 +36,17 @@ var AsDate ValueDecorator = func(valueExpr string) string {
 	return dateFunc(valueExpr)
 }
 
-type ObjectFilter struct {
-	ObjectPath string
+func NewTable(name string) *TableFilter {
+	return &TableFilter{
+		Name: name,
+	}
 }
-type JSONFilter struct {
-	FieldPath   string
-	FieldFilter *ColumnFilter
+
+func (t *TableFilter) Column(name string) *ColumnFilter {
+	return &ColumnFilter{
+		Name:      name,
+		TableName: t.Name,
+	}
 }
 
 func (f *ColumnFilter) Exists() Criteria {
@@ -61,23 +70,23 @@ func (f *ColumnFilter) IsFalse() Criteria {
 }
 
 func (f *ColumnFilter) Eq(value any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(EqOp, map[string]any{f.Name: value}, decorator)
+	return f.asCriteria(EqOp, value, decorator)
 }
 
 func (f *ColumnFilter) Gt(value any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(GtOp, map[string]any{f.Name: value}, decorator)
+	return f.asCriteria(GtOp, value, decorator)
 }
 
 func (f *ColumnFilter) GtEq(value any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(GtEqOp, map[string]any{f.Name: value}, decorator)
+	return f.asCriteria(GtEqOp, value, decorator)
 }
 
 func (f *ColumnFilter) Lt(value any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(LtOp, map[string]any{f.Name: value}, decorator)
+	return f.asCriteria(LtOp, value, decorator)
 }
 
 func (f *ColumnFilter) LtEq(value any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(LtEqOp, map[string]any{f.Name: value}, decorator)
+	return f.asCriteria(LtEqOp, value, decorator)
 }
 
 func (f *ColumnFilter) Neq(value any, decorator ...ValueDecorator) Criteria {
@@ -85,17 +94,17 @@ func (f *ColumnFilter) Neq(value any, decorator ...ValueDecorator) Criteria {
 }
 
 func (f *ColumnFilter) In(values []any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(InOp, map[string]any{f.Name: values}, decorator)
+	return f.asCriteria(InOp, values, decorator)
 }
 
 func (f *ColumnFilter) Like(pattern string, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(LikeOp, map[string]any{f.Name: pattern}, decorator)
+	return f.asCriteria(LikeOp, pattern, decorator)
 }
 
 // Between filters for values less than or equal to high and greater than or equal to the value of low.
 // (field >= low AND field <= high)
 func (f *ColumnFilter) Between(low any, high any, decorator ...ValueDecorator) Criteria {
-	return f.asCriteria(BetweenOp, map[string]any{f.Name: []any{low, high}}, decorator)
+	return f.asCriteria(BetweenOp, []any{low, high}, decorator)
 }
 
 func (f *ColumnFilter) ToLower() *ColumnFilter {
@@ -125,12 +134,13 @@ func (f *ColumnFilter) WithColumnFunc(fun ColumnFunctionFunc, args ...any) *Colu
 	return f
 }
 
-func (f *ColumnFilter) asCriteria(opType OpFuncType, params map[string]any, decorator []ValueDecorator) *UnaryCriteria {
-	columnExpr := f.Name
+func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []ValueDecorator) *UnaryCriteria {
+	columnExpr := f.TableName + "." + f.Name
 	if f.ColumnFunction != nil {
 		columnExpr = f.ColumnFunction(columnExpr, f.ColumnFunctionArgs...)
 	}
-	valueExpr := ":" + f.Name
+	paramName := f.TableName + "_" + f.Name
+	valueExpr := ":" + paramName
 	for _, decorate := range decorator {
 		valueExpr = decorate(valueExpr)
 	}
@@ -138,12 +148,6 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, params map[string]any, deco
 		OpType:     opType,
 		ColumnExpr: columnExpr,
 		ValueExpr:  valueExpr,
-		Parameter:  params,
-	}
-}
-
-func Field(path string) *ColumnFilter {
-	return &ColumnFilter{
-		Name: path,
+		Parameter:  map[string]any{paramName: value},
 	}
 }
