@@ -1,14 +1,35 @@
 package filter
 
-const (
-	ToLowerFunc     = "to_lower"
-	JSONExtractFunc = "json_extract"
+type ColumnFunctionType int
+
+var (
+	lowerFunc ColumnFunctionFunc = func(columnExpr string, args ...any) string {
+		return "LOWER(" + columnExpr + ")"
+	}
+	upperFunc ColumnFunctionFunc = func(columnExpr string, args ...any) string {
+		return "UPPER(" + columnExpr + ")"
+	}
+	jsonbExtractFunc = func(columnExpr string, args ...any) string {
+		return "jsonb_extract(" + columnExpr + ", '" + args[0].(string) + "')"
+	}
+	dateFunc = func(columnExpr string, args ...any) string {
+		return "DATE(" + columnExpr + ")"
+	}
 )
 
-type FieldFilter struct {
-	FieldPath    string
-	Function     string
-	FunctionArgs []string
+type (
+	ColumnFunctionFunc func(columnExpr string, args ...any) string
+	ValueDecorator     func(valueExpr string) string
+	ColumnFilter       struct {
+		/*a.k.a ColumnName*/
+		Name               string
+		ColumnFunction     ColumnFunctionFunc
+		ColumnFunctionArgs []any
+	}
+)
+
+var AsDate ValueDecorator = func(valueExpr string) string {
+	return dateFunc(valueExpr)
 }
 
 type ObjectFilter struct {
@@ -16,97 +37,118 @@ type ObjectFilter struct {
 }
 type JSONFilter struct {
 	FieldPath   string
-	FieldFilter *FieldFilter
+	FieldFilter *ColumnFilter
 }
 
-func (f *FieldFilter) Exists() Criteria {
-	return newCriteria(ExistsOp, f.FieldPath, f.Function, f.FunctionArgs, nil)
+func (f *ColumnFilter) Exists() Criteria {
+	return f.asCriteria(ExistsOp, nil, nil)
 }
 
-func (f *FieldFilter) NotExists() Criteria {
-	return newCriteria(ExistsOp, f.FieldPath, f.Function, f.FunctionArgs, nil).Not()
-}
-
-func (f *FieldFilter) IsNil() Criteria {
+func (f *ColumnFilter) IsNil() Criteria {
 	return f.Eq(nil)
 }
 
-func (f *FieldFilter) IsNotNil() Criteria {
+func (f *ColumnFilter) IsNotNil() Criteria {
 	return f.Eq(nil).Not()
 }
 
-func (f *FieldFilter) IsTrue() Criteria {
+func (f *ColumnFilter) IsTrue() Criteria {
 	return f.Eq(true)
 }
 
-func (f *FieldFilter) IsFalse() Criteria {
+func (f *ColumnFilter) IsFalse() Criteria {
 	return f.Eq(false)
 }
 
-func (f *FieldFilter) IsNilOrNotExists() Criteria {
-	return f.IsNil().Or(f.NotExists())
+func (f *ColumnFilter) Eq(value any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(EqOp, map[string]any{f.Name: value}, decorator)
 }
 
-func (f *FieldFilter) Eq(value any) Criteria {
-	return newCriteria(EqOp, f.FieldPath, f.Function, f.FunctionArgs, value)
+func (f *ColumnFilter) Gt(value any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(GtOp, map[string]any{f.Name: value}, decorator)
 }
 
-func (f *FieldFilter) Gt(value any) Criteria {
-	return newCriteria(GtOp, f.FieldPath, f.Function, f.FunctionArgs, value)
+func (f *ColumnFilter) GtEq(value any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(GtEqOp, map[string]any{f.Name: value}, decorator)
 }
 
-func (f *FieldFilter) GtEq(value any) Criteria {
-	return newCriteria(GtEqOp, f.FieldPath, f.Function, f.FunctionArgs, value)
+func (f *ColumnFilter) Lt(value any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(LtOp, map[string]any{f.Name: value}, decorator)
 }
 
-func (f *FieldFilter) Lt(value any) Criteria {
-	return newCriteria(LtOp, f.FieldPath, f.Function, f.FunctionArgs, value)
+func (f *ColumnFilter) LtEq(value any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(LtEqOp, map[string]any{f.Name: value}, decorator)
 }
 
-func (f *FieldFilter) LtEq(value any) Criteria {
-	return newCriteria(LtEqOp, f.FieldPath, f.Function, f.FunctionArgs, value)
+func (f *ColumnFilter) Neq(value any, decorator ...ValueDecorator) Criteria {
+	return f.Eq(value, decorator...).Not()
 }
 
-func (f *FieldFilter) Neq(value any) Criteria {
-	return f.Eq(value).Not()
+func (f *ColumnFilter) In(values []any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(InOp, map[string]any{f.Name: values}, decorator)
 }
 
-func (f *FieldFilter) In(values ...any) Criteria {
-	return newCriteria(InOp, f.FieldPath, f.Function, f.FunctionArgs, values)
-}
-
-func (f *FieldFilter) Like(pattern string) Criteria {
-	return newCriteria(LikeOp, f.FieldPath, f.Function, f.FunctionArgs, pattern)
-}
-
-func (f *FieldFilter) Contains(elems ...any) Criteria {
-	return newCriteria(ContainsOp, f.FieldPath, f.Function, f.FunctionArgs, elems)
+func (f *ColumnFilter) Like(pattern string, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(LikeOp, map[string]any{f.Name: pattern}, decorator)
 }
 
 // Between filters for values less than or equal to high and greater than or equal to the value of low.
 // (field >= low AND field <= high)
-func (f *FieldFilter) Between(low any, high any) Criteria {
-	return newCriteria(BetweenOp, f.FieldPath, f.Function, f.FunctionArgs, []any{low, high})
+func (f *ColumnFilter) Between(low any, high any, decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(BetweenOp, map[string]any{f.Name: []any{low, high}}, decorator)
 }
 
-func (f *FieldFilter) ToLowerCase() *FieldFilter {
-	f.Function = ToLowerFunc
+func (f *ColumnFilter) ToLower() *ColumnFilter {
+	f.ColumnFunction = lowerFunc
 	return f
 }
 
-func (f *FieldFilter) JSONExtract(path string) *FieldFilter {
-	f.Function = JSONExtractFunc
-	f.FunctionArgs = []string{path}
+func (f *ColumnFilter) ToUpper() *ColumnFilter {
+	f.ColumnFunction = upperFunc
 	return f
 }
 
-func (f *ObjectFilter) Field(name string) *FieldFilter {
+func (f *ColumnFilter) JSONBExtract(path string) *ColumnFilter {
+	f.ColumnFunction = jsonbExtractFunc
+	f.ColumnFunctionArgs = []any{path}
+	return f
+}
+
+func (f *ColumnFilter) AsDate() *ColumnFilter {
+	f.ColumnFunction = dateFunc
+	return f
+}
+
+func (f *ColumnFilter) WithColumnFunc(fun ColumnFunctionFunc, args ...any) *ColumnFilter {
+	f.ColumnFunction = fun
+	f.ColumnFunctionArgs = args
+	return f
+}
+
+func (f *ColumnFilter) asCriteria(opType OpFuncType, params map[string]any, decorator []ValueDecorator) *UnaryCriteria {
+	columnExpr := f.Name
+	if f.ColumnFunction != nil {
+		columnExpr = f.ColumnFunction(columnExpr, f.ColumnFunctionArgs...)
+	}
+	valueExpr := ":" + f.Name
+	for _, decorate := range decorator {
+		valueExpr = decorate(valueExpr)
+	}
+	return &UnaryCriteria{
+		OpType:     opType,
+		ColumnExpr: columnExpr,
+		ValueExpr:  valueExpr,
+		Parameter:  params,
+	}
+}
+
+func (f *ObjectFilter) Field(name string) *ColumnFilter {
 	if f.ObjectPath == "" {
-		return &FieldFilter{
+		return &ColumnFilter{
 			FieldPath: name,
 		}
 	}
-	return &FieldFilter{
+	return &ColumnFilter{
 		FieldPath: f.ObjectPath + "." + name,
 	}
 }
@@ -128,8 +170,8 @@ func Object(path string) *ObjectFilter {
 	}
 }
 
-func Field(path string) *FieldFilter {
-	return &FieldFilter{
-		FieldPath: path,
+func Field(path string) *ColumnFilter {
+	return &ColumnFilter{
+		Name: path,
 	}
 }
