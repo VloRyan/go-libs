@@ -142,34 +142,6 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, params map[string]any, deco
 	}
 }
 
-func (f *ObjectFilter) Field(name string) *ColumnFilter {
-	if f.ObjectPath == "" {
-		return &ColumnFilter{
-			FieldPath: name,
-		}
-	}
-	return &ColumnFilter{
-		FieldPath: f.ObjectPath + "." + name,
-	}
-}
-
-func (f *ObjectFilter) Object(path string) *ObjectFilter {
-	if f.ObjectPath == "" {
-		return &ObjectFilter{
-			ObjectPath: path,
-		}
-	}
-	return &ObjectFilter{
-		ObjectPath: f.ObjectPath + "." + path,
-	}
-}
-
-func Object(path string) *ObjectFilter {
-	return &ObjectFilter{
-		ObjectPath: path,
-	}
-}
-
 func Field(path string) *ColumnFilter {
 	return &ColumnFilter{
 		Name: path,
