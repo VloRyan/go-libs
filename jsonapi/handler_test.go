@@ -278,30 +278,31 @@ func TestGenericHandler_applyMetadata(t *testing.T) {
 		meta MetaData
 		want MetaData
 	}
-	tests := []testCase{{
-		name: "with meta data",
-		meta: map[string]any{"a": "va", "b": "vb"},
-		want: map[string]any{"a": "va", "b": "vb"},
-	}, {
-		name: "with page",
-		page: &pagination.Page{
-			Offset:     1,
-			Limit:      2,
-			Sort:       []string{"a", "b"},
-			TotalCount: 7,
+	tests := []testCase{
+		{
+			name: "with meta data",
+			meta: map[string]any{"a": "va", "b": "vb"},
+			want: map[string]any{"a": "va", "b": "vb"},
+		}, {
+			name: "with page",
+			page: &pagination.Page{
+				Offset:     1,
+				Limit:      2,
+				Sort:       []string{"a", "b"},
+				TotalCount: 7,
+			},
+			want: map[string]any{"page[limit]": 2, "page[offset]": 1, "page[sort]": "a,b", "page[total]": 7},
+		}, {
+			name: "with page and meta data",
+			meta: map[string]any{"b": "vb"},
+			page: &pagination.Page{
+				Offset:     2,
+				Limit:      3,
+				Sort:       []string{"a", "b"},
+				TotalCount: 8,
+			},
+			want: map[string]any{"b": "vb", "page[limit]": 3, "page[offset]": 2, "page[sort]": "a,b", "page[total]": 8},
 		},
-		want: map[string]any{"page[limit]": 2, "page[offset]": 1, "page[sort]": "a,b", "page[total]": 7},
-	}, {
-		name: "with page and meta data",
-		meta: map[string]any{"b": "vb"},
-		page: &pagination.Page{
-			Offset:     2,
-			Limit:      3,
-			Sort:       []string{"a", "b"},
-			TotalCount: 8,
-		},
-		want: map[string]any{"b": "vb", "page[limit]": 3, "page[offset]": 2, "page[sort]": "a,b", "page[total]": 8},
-	},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
