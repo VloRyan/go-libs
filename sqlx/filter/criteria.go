@@ -1,7 +1,5 @@
 package filter
 
-import "strings"
-
 type Criteria interface {
 	Not() Criteria
 	And(c Criteria) Criteria
@@ -92,6 +90,19 @@ func (b *BinaryCriteria) ToWhere() Where {
 	if len(where.Parameter) == 0 {
 		where.Parameter = nil
 	}
+	tables := make(map[string]bool)
+	for _, t := range w1.Tables {
+		if _, found := tables[t]; !found {
+			where.Tables = append(where.Tables, t)
+			tables[t] = true
+		}
+	}
+	for _, t := range w2.Tables {
+		if _, found := tables[t]; !found {
+			where.Tables = append(where.Tables, t)
+			tables[t] = true
+		}
+	}
 	return where
 }
 
@@ -104,6 +115,7 @@ type (
 		ValueExpr     string
 		Parameter     map[string]any
 		ValueFunction ValueFunctionType
+		TableName     string
 	}
 )
 
@@ -131,14 +143,7 @@ func (f *UnaryCriteria) ToWhere() Where {
 	case LikeOp:
 		op = "LIKE "
 	case InOp:
-		op = "IN ("
-		params := make([]string, len(f.Parameter))
-		i := 0
-		for k := range f.Parameter {
-			params[i] = ":" + k
-			i++
-		}
-		valueExpr = strings.Join(params, ", ") + ")"
+		op = "IN "
 	case GtOp:
 		op = "> "
 	case GtEqOp:
@@ -149,12 +154,12 @@ func (f *UnaryCriteria) ToWhere() Where {
 		op = "<= "
 	case BetweenOp:
 		op = "BETWEEN "
-		valueExpr = valueExpr + "_0 AND " + valueExpr + "_1"
 	default:
 	}
 	where := Where{
 		Clause:    f.ColumnExpr + " " + op + valueExpr,
 		Parameter: f.Parameter,
+		Tables:    []string{f.TableName},
 	}
 	return where
 }

@@ -33,11 +33,10 @@ func TestEmptyCriteria_ToWhere(t *testing.T) {
 
 func TestUnaryCriteria_ToWhere(t *testing.T) {
 	tests := []struct {
-		name      string
-		criteria  *UnaryCriteria
-		tableName string
-		want      Where
-		wantErr   bool
+		name     string
+		criteria *UnaryCriteria
+		want     Where
+		wantErr  bool
 	}{{
 		name: "eq",
 		criteria: &UnaryCriteria{
@@ -45,21 +44,19 @@ func TestUnaryCriteria_ToWhere(t *testing.T) {
 			ColumnExpr: "field",
 			ValueExpr:  ":field",
 		},
-		tableName: "MyTable",
 		want: Where{
-			Clause: "MyTable.field = :field",
+			Clause: "field = :field",
 		},
 	}, {
-		name: "Between",
+		name: "between",
 		criteria: &UnaryCriteria{
 			OpType:     BetweenOp,
 			ColumnExpr: "field",
-			ValueExpr:  ":field",
+			ValueExpr:  ":field_0 AND :field_1",
 			Parameter:  map[string]any{"field_0": 0, "field_1": 1},
 		},
-		tableName: "table",
 		want: Where{
-			Clause:    "table.field BETWEEN :field_0 AND :field_1",
+			Clause:    "field BETWEEN :field_0 AND :field_1",
 			Parameter: map[string]any{"field_0": 0, "field_1": 1},
 		},
 	}, {
@@ -67,15 +64,15 @@ func TestUnaryCriteria_ToWhere(t *testing.T) {
 		criteria: &UnaryCriteria{
 			OpType:     InOp,
 			ColumnExpr: "field",
+			ValueExpr:  "(:field_0, :field_1, :field_2)",
 			Parameter: map[string]any{
 				"field_0": 0,
 				"field_1": 1,
 				"field_2": 3,
 			},
 		},
-		tableName: "table",
 		want: Where{
-			Clause: "table.field IN (:field_0, :field_1, :field_2)",
+			Clause: "field IN (:field_0, :field_1, :field_2)",
 			Parameter: map[string]any{
 				"field_0": 0,
 				"field_1": 1,
@@ -153,6 +150,25 @@ func TestBinaryCriteria_ToWhere(t *testing.T) {
 		},
 		want: Where{
 			Clause: "() OR ()",
+		},
+	}, {
+		name: "tables",
+		criteria: &BinaryCriteria{
+			First: &BinaryCriteria{
+				First:  &UnaryCriteria{TableName: "tableA"},
+				Second: &UnaryCriteria{TableName: "tableB"},
+				Conn:   ConnOpOr,
+			},
+			Second: &BinaryCriteria{
+				First:  &UnaryCriteria{TableName: "tableB"},
+				Second: &UnaryCriteria{TableName: "tableD"},
+				Conn:   ConnOpAnd,
+			},
+			Conn: ConnOpAnd,
+		},
+		want: Where{
+			Clause: "(( IS NOT NULL) OR ( IS NOT NULL)) AND (( IS NOT NULL) AND ( IS NOT NULL))",
+			Tables: []string{"tableA", "tableB", "tableD"},
 		},
 	}}
 	for _, tt := range tests {

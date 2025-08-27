@@ -1,5 +1,10 @@
 package filter
 
+import (
+	"reflect"
+	"strconv"
+)
+
 type ColumnFunctionType int
 
 var (
@@ -144,10 +149,40 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []Valu
 	for _, decorate := range decorator {
 		valueExpr = decorate(valueExpr)
 	}
+	var parameter map[string]any
+	switch opType {
+
+	case BetweenOp:
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Slice {
+			parameter = make(map[string]any, v.Len())
+			valueExpr = ":" + paramName + "_0 AND " + ":" + paramName + "_1"
+			parameter[paramName+"_0"] = v.Index(0).Interface()
+			parameter[paramName+"_1"] = v.Index(1).Interface()
+		}
+	case InOp:
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Slice {
+			parameter = make(map[string]any, v.Len())
+			valueExpr = "("
+			for i := 0; i < v.Len(); i++ {
+				elemName := paramName + "_" + strconv.Itoa(i)
+				parameter[elemName] = v.Index(i).Interface()
+				if i > 0 {
+					valueExpr += ", "
+				}
+				valueExpr += ":" + elemName
+			}
+			valueExpr += ")"
+		}
+	default:
+		parameter = map[string]any{paramName: value}
+	}
 	return &UnaryCriteria{
 		OpType:     opType,
 		ColumnExpr: columnExpr,
 		ValueExpr:  valueExpr,
-		Parameter:  map[string]any{paramName: value},
+		Parameter:  parameter,
+		TableName:  f.TableName,
 	}
 }
