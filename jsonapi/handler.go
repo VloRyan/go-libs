@@ -161,6 +161,9 @@ func (h *GenericHandler[T]) resolveIncludes(resolverFunc resolveObjectFunc, incl
 	resolvedCache := make(map[string]*ResourceObject)
 	var resolvedObjects []*ResourceObject
 	relationships := doc.Relationships()
+	if len(relationships) == 0 {
+		return nil
+	}
 	if err := ForEachElem(doc.Data, func(e *ResourceObject) error {
 		for k, v := range e.LocalObjects() {
 			resolvedCache[k] = v
@@ -174,9 +177,10 @@ func (h *GenericHandler[T]) resolveIncludes(resolverFunc resolveObjectFunc, incl
 		if err != nil {
 			return err
 		}
-		if len(objs) > 0 {
-			resolvedObjects = append(resolvedObjects, objs...)
+		if len(objs) == 0 {
+			return errors.New("failed to resolve include " + include)
 		}
+		resolvedObjects = append(resolvedObjects, objs...)
 	}
 	resolvedObjectSet := make([]*ResourceObject, 0, len(resolvedObjects))
 	for _, obj := range resolvedObjects {
