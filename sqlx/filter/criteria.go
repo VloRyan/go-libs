@@ -90,19 +90,6 @@ func (b *BinaryCriteria) ToWhere() Where {
 	if len(where.Parameter) == 0 {
 		where.Parameter = nil
 	}
-	tables := make(map[string]bool)
-	for _, t := range w1.Tables {
-		if _, found := tables[t]; !found {
-			where.Tables = append(where.Tables, t)
-			tables[t] = true
-		}
-	}
-	for _, t := range w2.Tables {
-		if _, found := tables[t]; !found {
-			where.Tables = append(where.Tables, t)
-			tables[t] = true
-		}
-	}
 	return where
 }
 
@@ -115,7 +102,6 @@ type (
 		ValueExpr     string
 		Parameter     map[string]any
 		ValueFunction ValueFunctionType
-		TableName     string
 	}
 )
 
@@ -159,7 +145,6 @@ func (f *UnaryCriteria) ToWhere() Where {
 	where := Where{
 		Clause:    f.ColumnExpr + " " + op + valueExpr,
 		Parameter: f.Parameter,
-		Tables:    []string{f.TableName},
 	}
 	return where
 }

@@ -183,6 +183,5 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []Valu
 		ColumnExpr: columnExpr,
 		ValueExpr:  valueExpr,
 		Parameter:  parameter,
-		TableName:  f.TableName,
 	}
 }
