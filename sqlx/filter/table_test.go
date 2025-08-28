@@ -108,6 +108,16 @@ func TestTableFilter(t *testing.T) {
 			ValueExpr:  "(:table_field_0, :table_field_1, :table_field_2)",
 			Parameter:  map[string]any{"table_field_0": 1, "table_field_1": 2, "table_field_2": 4},
 		},
+	}, {
+		name: "is nil",
+		f: func() Criteria {
+			return NewTable("table").Column("field").IsNil()
+		},
+		want: &UnaryCriteria{
+			OpType:     IsOp,
+			ColumnExpr: "table.field",
+			ValueExpr:  "NULL",
+		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

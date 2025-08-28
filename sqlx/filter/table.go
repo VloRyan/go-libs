@@ -54,16 +54,8 @@ func (t *TableFilter) Column(name string) *ColumnFilter {
 	}
 }
 
-func (f *ColumnFilter) Exists() Criteria {
-	return f.asCriteria(ExistsOp, nil, nil)
-}
-
-func (f *ColumnFilter) IsNil() Criteria {
-	return f.Eq(nil)
-}
-
-func (f *ColumnFilter) IsNotNil() Criteria {
-	return f.Eq(nil).Not()
+func (f *ColumnFilter) IsNil(decorator ...ValueDecorator) Criteria {
+	return f.asCriteria(IsOp, nil, decorator)
 }
 
 func (f *ColumnFilter) IsTrue() Criteria {
@@ -151,7 +143,10 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []Valu
 	}
 	var parameter map[string]any
 	switch opType {
-
+	case IsOp:
+		if value == nil {
+			valueExpr = "NULL"
+		}
 	case BetweenOp:
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.Slice {

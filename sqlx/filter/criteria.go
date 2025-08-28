@@ -36,18 +36,18 @@ const (
 	ConnOpOr
 )
 
-type OpFuncType int
+type OpFuncType string
 
 const (
-	ExistsOp OpFuncType = iota
-	EqOp
-	GtOp
-	GtEqOp
-	LtOp
-	LtEqOp
-	LikeOp
-	InOp
-	BetweenOp
+	EqOp      OpFuncType = "="
+	GtOp      OpFuncType = ">"
+	GtEqOp    OpFuncType = ">="
+	LtOp      OpFuncType = "<"
+	LtEqOp    OpFuncType = "<="
+	LikeOp    OpFuncType = "LIKE"
+	InOp      OpFuncType = "IN"
+	BetweenOp OpFuncType = "BETWEEN"
+	IsOp      OpFuncType = "IS"
 )
 
 type BinaryCriteria struct {
@@ -118,32 +118,8 @@ func (f *UnaryCriteria) Or(c Criteria) Criteria {
 }
 
 func (f *UnaryCriteria) ToWhere() Where {
-	var op string
-	valueExpr := f.ValueExpr
-	switch f.OpType {
-	case ExistsOp:
-		op = "IS NOT NULL"
-		valueExpr = ""
-	case EqOp:
-		op = "= "
-	case LikeOp:
-		op = "LIKE "
-	case InOp:
-		op = "IN "
-	case GtOp:
-		op = "> "
-	case GtEqOp:
-		op = ">= "
-	case LtOp:
-		op = "< "
-	case LtEqOp:
-		op = "<= "
-	case BetweenOp:
-		op = "BETWEEN "
-	default:
-	}
 	where := Where{
-		Clause:    f.ColumnExpr + " " + op + valueExpr,
+		Clause:    f.ColumnExpr + " " + string(f.OpType) + " " + f.ValueExpr,
 		Parameter: f.Parameter,
 	}
 	return where
