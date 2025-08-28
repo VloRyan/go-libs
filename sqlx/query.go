@@ -245,7 +245,7 @@ func extractParamArgsFromStruct(obj any, names []string) ([]any, error) {
 				return strings.EqualFold(field.Name, stringx.ToCamelCase(namePart))
 			})
 			if !field.IsValid() {
-				continue
+				return nil, errors.New("failed to resolve path '" + name + "' on struct " + reflect.TypeOf(obj).String())
 			}
 			if field.Kind() == reflect.Ptr && field.IsNil() {
 				currObj = nil

@@ -4,12 +4,16 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/google/go-cmp/cmp"
 )
 
 type dummyObject struct {
-	ID uint
+	ID     uint
+	Nested struct {
+		Name string
+	}
 }
 
 func TestExec(t *testing.T) {
@@ -21,17 +25,19 @@ func TestExec(t *testing.T) {
 		name        string
 		args        args
 		setupExpect func(m sqlmock.Sqlmock)
+		wantErr     assert.ErrorAssertionFunc
 	}{{
-		name: "object arg",
+		name: "struct arg",
 		args: args{
-			query: "SELECT id FROM tab WHERE id = :id",
-			args:  &dummyObject{ID: 7},
+			query: "SELECT id FROM tab WHERE id = :id AND name = :nested.name",
+			args:  &dummyObject{ID: 7, Nested: struct{ Name string }{Name: "test"}},
 		},
 		setupExpect: func(m sqlmock.Sqlmock) {
-			m.ExpectExec("SELECT id FROM tab WHERE id = ?").
-				WithArgs(uint(7)).
+			m.ExpectExec("SELECT id FROM tab WHERE id = ? AND name = ?").
+				WithArgs(uint(7), "test").
 				WillReturnResult(sqlmock.NewResult(7, 1))
 		},
+		wantErr: assert.NoError,
 	}, {
 		name: "map arg",
 		args: args{
@@ -43,6 +49,7 @@ func TestExec(t *testing.T) {
 				WithArgs(uint(7)).
 				WillReturnResult(sqlmock.NewResult(7, 1))
 		},
+		wantErr: assert.NoError,
 	}, {
 		name: "map arg in",
 		args: args{
@@ -55,6 +62,7 @@ func TestExec(t *testing.T) {
 				WithArgs(uint(7), uint(8)).
 				WillReturnResult(sqlmock.NewResult(8, 2))
 		},
+		wantErr: assert.NoError,
 	}, {
 		name: "slice args",
 		args: args{
@@ -75,6 +83,7 @@ func TestExec(t *testing.T) {
 				).
 				WillReturnResult(sqlmock.NewResult(8, 2))
 		},
+		wantErr: assert.NoError,
 	}, {
 		name: "slice args with one element",
 		args: args{
@@ -87,6 +96,19 @@ func TestExec(t *testing.T) {
 				WithArgs(uint(7), uint(8)).
 				WillReturnResult(sqlmock.NewResult(8, 2))
 		},
+		wantErr: assert.NoError,
+	}, {
+		name: "fail on unresolvable struct path",
+		args: args{
+			query: "SELECT id FROM tab WHERE id = :id AND name = :nested.type",
+			args:  &dummyObject{ID: 7, Nested: struct{ Name string }{Name: "test"}},
+		},
+		setupExpect: func(m sqlmock.Sqlmock) {
+			m.ExpectRollback()
+		},
+		wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			return assert.ErrorContains(t, err, "'nested.type'", i...)
+		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -96,9 +118,7 @@ func TestExec(t *testing.T) {
 			}
 			tt.setupExpect(mock)
 			_, err = Exec(db, tt.args.query, tt.args.args)
-			if err != nil {
-				t.Fatalf("Exec() error = %v", err)
-			}
+			tt.wantErr(t, err, "Exec()")
 		})
 	}
 }
