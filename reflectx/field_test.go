@@ -173,13 +173,27 @@ func TestSetTimeField(t *testing.T) {
 		valueFormat: "15:04:05",
 		field:       "TimeOnly",
 		wantErr:     assert.NoError,
+	}, {
+		name:        "autodetect date",
+		value:       "2025-08-11",
+		valueFormat: time.DateOnly,
+		field:       "Time",
+		wantErr:     assert.NoError,
+	}, {
+		name:        "autodetect time",
+		value:       "12:01:02",
+		valueFormat: time.TimeOnly,
+		field:       "Time",
+		wantErr:     assert.NoError,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			obj := &timeObject{}
 			structField, _ := TypeOf(obj, true).FieldByName(tt.field)
 			fieldValue := ValueOf(obj, true).FieldByName(tt.field)
-			tt.wantErr(t, SetTimeField(tt.value, structField, fieldValue), "SetTimeField()")
+			if !tt.wantErr(t, SetTimeField(tt.value, structField, fieldValue), "SetTimeField()") {
+				return
+			}
 			timeFormat := tt.valueFormat
 			if timeFormat == "" {
 				timeFormat = time.RFC3339

@@ -152,7 +152,7 @@ func SetTimeField(val string, structField reflect.StructField, value reflect.Val
 	case "datetime":
 		timeFormat = time.DateTime
 	case "":
-		timeFormat = time.RFC3339
+		timeFormat = detectTimeFormat(val, time.RFC3339)
 	}
 
 	if val == "" {
@@ -173,4 +173,18 @@ func SetTimeField(val string, structField reflect.StructField, value reflect.Val
 		value.Set(reflect.ValueOf(t))
 	}
 	return nil
+}
+
+func detectTimeFormat(value string, defaultFormat string) string {
+	if len(value) == len(time.DateOnly) &&
+		value[4] == '-' &&
+		value[7] == '-' {
+		return time.DateOnly
+	}
+	if len(value) == len(time.TimeOnly) &&
+		value[2] == ':' &&
+		value[5] == ':' {
+		return time.TimeOnly
+	}
+	return defaultFormat
 }
