@@ -151,25 +151,6 @@ func TestBinaryCriteria_ToWhere(t *testing.T) {
 		want: Where{
 			Clause: "() OR ()",
 		},
-	}, {
-		name: "tables",
-		criteria: &BinaryCriteria{
-			First: &BinaryCriteria{
-				First:  &UnaryCriteria{TableName: "tableA"},
-				Second: &UnaryCriteria{TableName: "tableB"},
-				Conn:   ConnOpOr,
-			},
-			Second: &BinaryCriteria{
-				First:  &UnaryCriteria{TableName: "tableB"},
-				Second: &UnaryCriteria{TableName: "tableD"},
-				Conn:   ConnOpAnd,
-			},
-			Conn: ConnOpAnd,
-		},
-		want: Where{
-			Clause: "(( IS NOT NULL) OR ( IS NOT NULL)) AND (( IS NOT NULL) AND ( IS NOT NULL))",
-			Tables: []string{"tableA", "tableB", "tableD"},
-		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

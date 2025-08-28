@@ -24,7 +24,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "table.field",
 			ValueExpr:  ":table_field",
 			Parameter:  map[string]any{"table_field": "test"},
-			TableName:  "table",
 		},
 	}, {
 		name: "lower",
@@ -36,7 +35,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "LOWER(table.field)",
 			ValueExpr:  ":table_field",
 			Parameter:  map[string]any{"table_field": "test"},
-			TableName:  "table",
 		},
 	}, {
 		name: "asDate",
@@ -48,7 +46,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "DATE(table.field)",
 			ValueExpr:  ":table_field",
 			Parameter:  map[string]any{"table_field": "test"},
-			TableName:  "table",
 		},
 	}, {
 		name: "jsonb_extract",
@@ -60,7 +57,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "jsonb_extract(table.field, '$.A')",
 			ValueExpr:  ":table_field",
 			Parameter:  map[string]any{"table_field": "test"},
-			TableName:  "table",
 		},
 	}, {
 		name: "custom func",
@@ -78,7 +74,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "CUSTOM(table.field, 'a', 'b', 'c')",
 			ValueExpr:  ":table_field",
 			Parameter:  map[string]any{"table_field": "test"},
-			TableName:  "table",
 		},
 	}, {
 		name: "data compare",
@@ -90,7 +85,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "DATE(table.field)",
 			ValueExpr:  "DATE(:table_field)",
 			Parameter:  map[string]any{"table_field": testhelper.FixedNow},
-			TableName:  "table",
 		},
 	}, {
 		name: "between",
@@ -102,7 +96,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "table.field",
 			ValueExpr:  ":table_field_0 AND :table_field_1",
 			Parameter:  map[string]any{"table_field_0": 0, "table_field_1": 1},
-			TableName:  "table",
 		},
 	}, {
 		name: "in",
@@ -114,7 +107,6 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "table.field",
 			ValueExpr:  "(:table_field_0, :table_field_1, :table_field_2)",
 			Parameter:  map[string]any{"table_field_0": 1, "table_field_1": 2, "table_field_2": 4},
-			TableName:  "table",
 		},
 	}}
 	for _, tt := range tests {
