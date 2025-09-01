@@ -14,11 +14,17 @@ func (c *EmptyCriteria) Not() Criteria {
 }
 
 func (c *EmptyCriteria) And(Second Criteria) Criteria {
-	return Second
+	if Second != nil {
+		return Second
+	}
+	return c
 }
 
 func (c *EmptyCriteria) Or(Second Criteria) Criteria {
-	return Second
+	if Second != nil {
+		return Second
+	}
+	return c
 }
 
 func (c *EmptyCriteria) ToWhere() Where {
