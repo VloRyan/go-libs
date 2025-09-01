@@ -1,13 +1,17 @@
 package filter
 
 type Where struct {
-	Clause    string
+	Statement string
 	Parameter map[string]any
 }
 
-func (c *Where) SQL() string {
-	if c.Clause == "" {
+func (c *Where) Clause() string {
+	if c.Statement == "" {
 		return ""
 	}
-	return "WHERE " + c.Clause
+	return "WHERE " + c.Statement
+}
+
+func (c *Where) Empty() bool {
+	return c.Statement == ""
 }

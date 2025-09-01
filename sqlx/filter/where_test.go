@@ -2,7 +2,7 @@ package filter
 
 import "testing"
 
-func TestWhere_SQL(t *testing.T) {
+func TestWhere_Clause(t *testing.T) {
 	tests := []struct {
 		name  string
 		where Where
@@ -12,13 +12,13 @@ func TestWhere_SQL(t *testing.T) {
 		want: "",
 	}, {
 		name:  "where",
-		where: Where{Clause: "fieldA = :a"},
+		where: Where{Statement: "fieldA = :a"},
 		want:  "WHERE fieldA = :a",
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.where.SQL(); got != tt.want {
-				t.Errorf("SQL() = %v, want %v", got, tt.want)
+			if got := tt.where.Clause(); got != tt.want {
+				t.Errorf("Clause() = %v, want %v", got, tt.want)
 			}
 		})
 	}

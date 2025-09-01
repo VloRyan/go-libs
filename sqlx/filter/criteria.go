@@ -73,14 +73,14 @@ func (b *BinaryCriteria) ToWhere() Where {
 		Parameter: make(map[string]any),
 	}
 	w1 := b.First.ToWhere()
-	where.Clause = "(" + w1.Clause + ")"
+	where.Statement = "(" + w1.Statement + ")"
 	if b.Conn == ConnOpAnd {
-		where.Clause += " AND "
+		where.Statement += " AND "
 	} else {
-		where.Clause += " OR "
+		where.Statement += " OR "
 	}
 	w2 := b.Second.ToWhere()
-	where.Clause += "(" + w2.Clause + ")"
+	where.Statement += "(" + w2.Statement + ")"
 	for k, v := range w1.Parameter {
 		where.Parameter[k] = v
 	}
@@ -119,7 +119,7 @@ func (f *UnaryCriteria) Or(c Criteria) Criteria {
 
 func (f *UnaryCriteria) ToWhere() Where {
 	where := Where{
-		Clause:    f.ColumnExpr + " " + string(f.OpType) + " " + f.ValueExpr,
+		Statement: f.ColumnExpr + " " + string(f.OpType) + " " + f.ValueExpr,
 		Parameter: f.Parameter,
 	}
 	return where
@@ -144,7 +144,7 @@ func (n *NotCriteria) Or(c Criteria) Criteria {
 func (n *NotCriteria) ToWhere() Where {
 	where := Where{}
 	w := n.C.ToWhere()
-	where.Clause = "NOT (" + w.Clause + ")"
+	where.Statement = "NOT (" + w.Statement + ")"
 	if w.Parameter != nil {
 		where.Parameter = w.Parameter
 	}

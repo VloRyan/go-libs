@@ -45,7 +45,7 @@ func TestUnaryCriteria_ToWhere(t *testing.T) {
 			ValueExpr:  ":field",
 		},
 		want: Where{
-			Clause: "field = :field",
+			Statement: "field = :field",
 		},
 	}, {
 		name: "between",
@@ -56,7 +56,7 @@ func TestUnaryCriteria_ToWhere(t *testing.T) {
 			Parameter:  map[string]any{"field_0": 0, "field_1": 1},
 		},
 		want: Where{
-			Clause:    "field BETWEEN :field_0 AND :field_1",
+			Statement: "field BETWEEN :field_0 AND :field_1",
 			Parameter: map[string]any{"field_0": 0, "field_1": 1},
 		},
 	}, {
@@ -72,7 +72,7 @@ func TestUnaryCriteria_ToWhere(t *testing.T) {
 			},
 		},
 		want: Where{
-			Clause: "field IN (:field_0, :field_1, :field_2)",
+			Statement: "field IN (:field_0, :field_1, :field_2)",
 			Parameter: map[string]any{
 				"field_0": 0,
 				"field_1": 1,
@@ -102,7 +102,7 @@ func TestNotCriteria_ToWhere(t *testing.T) {
 			C: &EmptyCriteria{},
 		},
 		want: Where{
-			Clause: "NOT ()",
+			Statement: "NOT ()",
 		},
 	}, {
 		name: "not not",
@@ -112,7 +112,7 @@ func TestNotCriteria_ToWhere(t *testing.T) {
 			},
 		},
 		want: Where{
-			Clause: "NOT (NOT ())",
+			Statement: "NOT (NOT ())",
 		},
 	}}
 	for _, tt := range tests {
@@ -139,7 +139,7 @@ func TestBinaryCriteria_ToWhere(t *testing.T) {
 			Conn:   ConnOpAnd,
 		},
 		want: Where{
-			Clause: "() AND ()",
+			Statement: "() AND ()",
 		},
 	}, {
 		name: "or",
@@ -149,7 +149,7 @@ func TestBinaryCriteria_ToWhere(t *testing.T) {
 			Conn:   ConnOpOr,
 		},
 		want: Where{
-			Clause: "() OR ()",
+			Statement: "() OR ()",
 		},
 	}}
 	for _, tt := range tests {
