@@ -45,6 +45,10 @@ var SparseFieldSetFilter = func(sparseFieldset map[string][]string) ResourceObje
 func (h *GenericHandler[T]) Handle(f func(req *http.Request) (*DocumentData[T], *Error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		contentType := req.Header.Get("Content-Type")
+		paramStart := strings.Index(contentType, ";")
+		if paramStart > -1 {
+			contentType = contentType[:paramStart]
+		}
 		if contentType != MediaType {
 			w.Header().Set("Content-Type", MediaType+"; charset=utf-8")
 			w.WriteHeader(http.StatusUnsupportedMediaType)
