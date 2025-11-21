@@ -39,30 +39,31 @@ func GenerateReplacedIndexHTML(fSys fs.FS, assetPath string, serverData string) 
 		fmt.Println("Error:", err)
 		return "", nil
 	}
-	var headNode *html.Node
-	for c := doc.FirstChild; c != nil; {
-		if c.Type == html.ElementNode && c.Data == "html" {
-			c = c.FirstChild
+	var head *html.Node
+	var body *html.Node
+	current := doc.FirstChild
+	for current != nil {
+		if current.Type == html.ElementNode && current.Data == "html" {
+			current = current.FirstChild
 			continue
 		}
-		if c.Type == html.ElementNode && c.Data == "head" {
-			headNode = c
-			break
+		if current.Type == html.ElementNode && current.Data == "head" {
+			head = current
 		}
-		c = c.NextSibling
+		if current.Type == html.ElementNode && current.Data == "body" {
+			body = current
+		}
+		current = current.NextSibling
 	}
-	if headNode == nil {
+	if head == nil {
 		return "", errors.New("could not find head node")
 	}
-	for c := headNode.FirstChild; c != nil; c = c.NextSibling {
-		for i := range c.Attr {
-			if c.Attr[i].Key == "src" || c.Attr[i].Key == "href" {
-				c.Attr[i].Val = path.Join(assetPath, c.Attr[i].Val)
-			}
-		}
+	prefixSrcHrefAttribs(head, assetPath)
+	if body != nil {
+		prefixSrcHrefAttribs(body, assetPath)
 	}
 	if serverData != "" {
-		firstChild := headNode.FirstChild
+		firstChild := head.FirstChild
 		scriptContentNode := &html.Node{
 			Type: html.TextNode,
 			Data: "\n        window.SERVER_DATA = " + serverData + "\n    ",
@@ -72,7 +73,7 @@ func GenerateReplacedIndexHTML(fSys fs.FS, assetPath string, serverData string) 
 			Data: "\n    ",
 		}
 		scriptNode := &html.Node{
-			Parent:      headNode,
+			Parent:      head,
 			FirstChild:  scriptContentNode,
 			LastChild:   scriptContentNode,
 			PrevSibling: newLineNode,
@@ -85,12 +86,21 @@ func GenerateReplacedIndexHTML(fSys fs.FS, assetPath string, serverData string) 
 		newLineNode.NextSibling = scriptNode
 		firstChild.PrevSibling = scriptNode
 		scriptContentNode.Parent = scriptNode
-		headNode.FirstChild = newLineNode
-		//	indexHtml = strings.Replace(indexHtml, "__SERVER_DATA__", string(b), 1)
+		head.FirstChild = newLineNode
 	}
 	w := NewInMemResponseWriter()
 	if err := html.Render(w, doc); err != nil {
 		return "", err
 	}
 	return string(w.Body), nil
+}
+
+func prefixSrcHrefAttribs(node *html.Node, prefix string) {
+	for c := node.FirstChild; c != nil; c = c.NextSibling {
+		for i := range c.Attr {
+			if c.Attr[i].Key == "src" || c.Attr[i].Key == "href" {
+				c.Attr[i].Val = path.Join(prefix, c.Attr[i].Val)
+			}
+		}
+	}
 }
