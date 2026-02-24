@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"strings"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -98,9 +99,13 @@ func GenerateReplacedIndexHTML(fSys fs.FS, assetPath string, serverData string) 
 func prefixSrcHrefAttribs(node *html.Node, prefix string) {
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
 		for i := range c.Attr {
-			if c.Attr[i].Key == "src" || c.Attr[i].Key == "href" {
+			if c.Attr[i].Key == "src" || c.Attr[i].Key == "href" && !isExternalPath(c.Attr[i].Val) {
 				c.Attr[i].Val = path.Join(prefix, c.Attr[i].Val)
 			}
 		}
 	}
+}
+
+func isExternalPath(path string) bool {
+	return strings.HasPrefix(path, "https://") || strings.HasPrefix(path, `http://`)
 }
