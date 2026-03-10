@@ -34,6 +34,7 @@ type (
 		TableName          string
 		ColumnFunction     ColumnFunctionFunc
 		ColumnFunctionArgs []any
+		ParamName          string
 	}
 )
 
@@ -131,13 +132,20 @@ func (f *ColumnFilter) WithColumnFunc(fun ColumnFunctionFunc, args ...any) *Colu
 	return f
 }
 
+func (f *ColumnFilter) WithParamName(name string) *ColumnFilter {
+	f.ParamName = name
+	return f
+}
+
 func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []ValueDecorator) *UnaryCriteria {
 	columnExpr := f.TableName + "." + f.Name
 	if f.ColumnFunction != nil {
 		columnExpr = f.ColumnFunction(columnExpr, f.ColumnFunctionArgs...)
 	}
-	paramName := f.TableName + "_" + f.Name
-	valueExpr := ":" + paramName
+	if f.ParamName == "" {
+		f.ParamName = f.TableName + "_" + f.Name
+	}
+	valueExpr := ":" + f.ParamName
 	for _, decorate := range decorator {
 		valueExpr = decorate(valueExpr)
 	}
@@ -151,9 +159,9 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []Valu
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.Slice {
 			parameter = make(map[string]any, v.Len())
-			valueExpr = ":" + paramName + "_0 AND " + ":" + paramName + "_1"
-			parameter[paramName+"_0"] = v.Index(0).Interface()
-			parameter[paramName+"_1"] = v.Index(1).Interface()
+			valueExpr = ":" + f.ParamName + "_0 AND " + ":" + f.ParamName + "_1"
+			parameter[f.ParamName+"_0"] = v.Index(0).Interface()
+			parameter[f.ParamName+"_1"] = v.Index(1).Interface()
 		}
 	case InOp:
 		v := reflect.ValueOf(value)
@@ -161,7 +169,7 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []Valu
 			parameter = make(map[string]any, v.Len())
 			valueExpr = "("
 			for i := 0; i < v.Len(); i++ {
-				elemName := paramName + "_" + strconv.Itoa(i)
+				elemName := f.ParamName + "_" + strconv.Itoa(i)
 				parameter[elemName] = v.Index(i).Interface()
 				if i > 0 {
 					valueExpr += ", "
@@ -171,7 +179,7 @@ func (f *ColumnFilter) asCriteria(opType OpFuncType, value any, decorator []Valu
 			valueExpr += ")"
 		}
 	default:
-		parameter = map[string]any{paramName: value}
+		parameter = map[string]any{f.ParamName: value}
 	}
 	return &UnaryCriteria{
 		OpType:     opType,

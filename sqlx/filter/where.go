@@ -5,13 +5,13 @@ type Where struct {
 	Parameter map[string]any
 }
 
-func (c *Where) Clause() string {
-	if c.Statement == "" {
+func (w *Where) Clause() string {
+	if w.Statement == "" {
 		return ""
 	}
-	return "WHERE " + c.Statement
+	return "WHERE " + w.Statement
 }
 
-func (c *Where) Empty() bool {
-	return c.Statement == ""
+func (w *Where) Empty() bool {
+	return w.Statement == ""
 }

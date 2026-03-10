@@ -118,6 +118,17 @@ func TestTableFilter(t *testing.T) {
 			ColumnExpr: "table.field",
 			ValueExpr:  "NULL",
 		},
+	}, {
+		name: "with param name",
+		f: func() Criteria {
+			return NewTable("table").Column("field").WithParamName("alias").Eq(3)
+		},
+		want: &UnaryCriteria{
+			OpType:     EqOp,
+			ColumnExpr: "table.field",
+			ValueExpr:  ":alias",
+			Parameter:  map[string]any{"alias": 3},
+		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
