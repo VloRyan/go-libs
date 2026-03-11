@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Convert(v reflect.Value, t reflect.Type) (reflect.Value, bool) {
@@ -47,6 +48,10 @@ func Convert(v reflect.Value, t reflect.Type) (reflect.Value, bool) {
 				return reflect.ValueOf(true), true
 			}
 		}
+	}
+	if v.Kind() == reflect.Int64 &&
+		t.Kind() == reflect.Struct && t == reflect.TypeOf(time.Time{}) {
+		return reflect.ValueOf(time.Unix(v.Int(), 0).UTC()), true
 	}
 	return reflect.Value{}, false
 }

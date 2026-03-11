@@ -3,6 +3,7 @@ package reflectx
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestConvert(t *testing.T) {
@@ -23,6 +24,15 @@ func TestConvert(t *testing.T) {
 				t: reflect.TypeOf(0),
 			},
 			want:        reflect.ValueOf(3),
+			wantSuccess: true,
+		},
+		{
+			name: "int64{}->time.Time",
+			args: args{
+				v: reflect.ValueOf(int64(1774915200)),
+				t: reflect.TypeOf(time.Time{}),
+			},
+			want:        reflect.ValueOf(time.Date(2026, 3, 31, 0, 0, 0, 0, time.UTC)),
 			wantSuccess: true,
 		},
 	}
