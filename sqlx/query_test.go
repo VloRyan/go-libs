@@ -2,9 +2,11 @@ package sqlx
 
 import (
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/vloryan/go-libs/testhelper"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -14,6 +16,10 @@ type dummyObject struct {
 	Nested struct {
 		Name string
 	}
+}
+type dummyTimeObject struct {
+	CreatedAt time.Time  `db:"created_at"`
+	DeletedAt *time.Time `db:"deleted_at,unix_timestamp"`
 }
 
 func TestExec(t *testing.T) {
@@ -109,6 +115,19 @@ func TestExec(t *testing.T) {
 		wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 			return assert.ErrorContains(t, err, "'nested.type'", i...)
 		},
+	}, {
+		name: "db tag(with unixts)",
+		args: args{
+			query: "INSERT INTO tab(created_at, deleted_at) VALUES (:created_at, :deleted_at)",
+			args:  &dummyTimeObject{CreatedAt: testhelper.FixedNow, DeletedAt: &testhelper.FixedNow},
+		},
+		setupExpect: func(m sqlmock.Sqlmock) {
+			unixNow := testhelper.FixedNow.Unix()
+			m.ExpectExec("INSERT INTO tab(created_at, deleted_at) VALUES (?, ?)").
+				WithArgs(testhelper.FixedNow, unixNow).
+				WillReturnResult(sqlmock.NewResult(7, 1))
+		},
+		wantErr: assert.NoError,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

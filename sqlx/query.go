@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/vloryan/go-libs/reflectx"
 	"github.com/vloryan/go-libs/stringx"
@@ -231,14 +232,12 @@ func extractParamArgsFromStruct(obj any, names []string) ([]any, error) {
 	for _, name := range names {
 		nameParts := strings.Split(name, ".")
 		currObj := obj
-		for _, namePart := range nameParts {
+		for i, namePart := range nameParts {
+			var dbTag reflectx.FieldTag
 			field := reflectx.FindFieldFunc(currObj, func(field reflect.StructField) bool {
-				dbTag := reflectx.Tag(field, "db")
+				dbTag = reflectx.Tag(field, "db")
 				if dbTag.Value != "" {
 					if dbTag.Value == name {
-						return true
-					}
-					if len(dbTag.Opts) > 0 && dbTag.Opts[0] == namePart {
 						return true
 					}
 				}
@@ -252,8 +251,33 @@ func extractParamArgsFromStruct(obj any, names []string) ([]any, error) {
 				break
 			}
 			currObj = field.Interface()
+			if i == len(nameParts)-1 && len(dbTag.Opts) > 0 {
+				currObj = convertValue(currObj, dbTag.Opts[0])
+			}
 		}
 		paramArgs = append(paramArgs, currObj)
 	}
 	return paramArgs, nil
+}
+
+func convertValue(value any, typeHint string) any {
+	switch strings.ToLower(typeHint) {
+	case "unixts":
+		fallthrough
+	case "unixtimestamp":
+		fallthrough
+	case "unix_timestamp":
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				return value
+			}
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Struct && v.Type() == reflect.TypeOf(time.Time{}) {
+			t := v.Interface().(time.Time)
+			return t.Unix()
+		}
+	}
+	return value
 }
