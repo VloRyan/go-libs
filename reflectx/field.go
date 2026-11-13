@@ -26,7 +26,7 @@ func FindField(v any, path string) reflect.Value {
 			elemIdentifier = part[idx+1 : strings.Index(part, "]")]
 			part = part[:idx]
 		}
-		if f.Kind() == reflect.Ptr {
+		if f.Kind() == reflect.Pointer {
 			if f.IsNil() {
 				return reflect.Value{}
 			}
@@ -65,7 +65,7 @@ func FindField(v any, path string) reflect.Value {
 
 func FindFieldFunc(v any, matchFunc func(field reflect.StructField) bool) reflect.Value {
 	rv := ValueOf(v, true)
-	if rv.Kind() == reflect.Ptr && rv.IsNil() {
+	if rv.Kind() == reflect.Pointer && rv.IsNil() {
 		return rv
 	}
 	tv := rv.Type()
@@ -86,7 +86,7 @@ func FindFieldFunc(v any, matchFunc func(field reflect.StructField) bool) reflec
 			}
 			continue
 		}
-		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct && field.Anonymous {
+		if field.Type.Kind() == reflect.Pointer && field.Type.Elem().Kind() == reflect.Struct && field.Anonymous {
 			matchField := FindFieldFunc(fieldValue.Addr().Interface(), matchFunc)
 			if matchField.IsValid() {
 				return matchField
@@ -110,13 +110,13 @@ func SetFieldValue(field reflect.Value, value any) error {
 		return nil
 	}
 
-	if rv.Type().Kind() == reflect.Ptr && !rv.IsNil() && field.Type().Kind() != reflect.Ptr {
+	if rv.Type().Kind() == reflect.Pointer && !rv.IsNil() && field.Type().Kind() != reflect.Pointer {
 		if setFieldValue(field, rv.Elem()) {
 			return nil
 		}
 	}
 
-	if field.Kind() == reflect.Ptr && rv.Type().Kind() != reflect.Ptr {
+	if field.Kind() == reflect.Pointer && rv.Type().Kind() != reflect.Pointer {
 		field.Set(reflect.New(field.Type().Elem()))
 		if setFieldValue(field.Elem(), rv) {
 			return nil
@@ -164,7 +164,7 @@ func SetTimeField(val string, structField reflect.StructField, value reflect.Val
 	if err != nil {
 		return err
 	}
-	if value.Type().Kind() == reflect.Ptr {
+	if value.Type().Kind() == reflect.Pointer {
 		if value.IsNil() {
 			value.Set(reflect.New(value.Type().Elem()))
 		}

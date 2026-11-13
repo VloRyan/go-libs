@@ -30,7 +30,7 @@ func MarshalResourceObject(data any, fieldFilterFunc ResourceObjectFieldFilterFu
 		return nil, nil
 	}
 	rv := reflect.ValueOf(data)
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Pointer {
 		if rv.IsNil() {
 			return nil, nil
 		}
@@ -69,7 +69,7 @@ func toResourceObject(v any, fieldFilterFunc ResourceObjectFieldFilterFunc) (*Re
 
 func identifier(v any) (*ResourceIdentifierObject, bool) {
 	vv := reflect.ValueOf(v)
-	if v == nil || (vv.Type().Kind() == reflect.Ptr && vv.IsNil()) {
+	if v == nil || (vv.Type().Kind() == reflect.Pointer && vv.IsNil()) {
 		return nil, false
 	}
 	identifier, ok := v.(ResourceIdentifierSource)
@@ -97,7 +97,7 @@ func mapStructFields(obj *ResourceObject, rv reflect.Value, path string, fieldNa
 			continue
 		}
 		ft := sf.Type
-		if ft.Kind() == reflect.Ptr {
+		if ft.Kind() == reflect.Pointer {
 			if fv.IsNil() {
 				if !jsonTag.Has("omitempty") {
 					obj.Attributes[stringx.ToCamelCase(sf.Name)] = nil

@@ -110,8 +110,8 @@ func TestSetFieldValue(t *testing.T) {
 			}
 			expected := reflect.ValueOf(tt.value)
 			ve := reflect.ValueOf(tt.expected)
-			if (ve.Kind() != reflect.Ptr && ve.IsValid() && !ve.IsZero()) ||
-				(ve.Kind() == reflect.Ptr && !ve.IsNil()) {
+			if (ve.Kind() != reflect.Pointer && ve.IsValid() && !ve.IsZero()) ||
+				(ve.Kind() == reflect.Pointer && !ve.IsNil()) {
 				expected = ve
 			}
 			if diff := cmp.Diff(expected.Interface(), field.Interface()); diff != "" {

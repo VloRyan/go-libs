@@ -28,7 +28,7 @@ func UnmarshalResourceObject(obj *ResourceObject, includes []*ResourceObject, v 
 
 func mapAttribs(attribs map[string]any, v any) error {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr {
+	if rv.Kind() != reflect.Pointer {
 		return errors.New("v is no pointer")
 	}
 	rv = rv.Elem()
@@ -47,7 +47,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 		value := attrValue
 
 		var unmarshaler json.Unmarshaler
-		if field.Type().Kind() == reflect.Ptr {
+		if field.Type().Kind() == reflect.Pointer {
 			if attrValue == nil {
 				field.SetZero()
 				continue
@@ -61,7 +61,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 			unmarshaler, _ = field.Addr().Interface().(json.Unmarshaler)
 		}
 		if unmarshaler != nil {
-			if ft == reflect.TypeOf(time.Time{}) && at.Kind() == reflect.String {
+			if ft == reflect.TypeFor[time.Time]() && at.Kind() == reflect.String {
 				if sf, found := reflectx.TypeOf(v, true).FieldByNameFunc(func(s string) bool {
 					return strings.EqualFold(s, name)
 				}); found {
@@ -175,7 +175,7 @@ func mapAttribs(attribs map[string]any, v any) error {
 
 func mapRelationships(relations map[string]*RelationshipObject, includes []*ResourceObject, v any) error {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr {
+	if rv.Kind() != reflect.Pointer {
 		return errors.New("v is no pointer")
 	}
 	rv = rv.Elem()
@@ -201,7 +201,7 @@ func mapRelationships(relations map[string]*RelationshipObject, includes []*Reso
 		if reflect.TypeOf(rel.Data).Kind() == reflect.Slice {
 			for _, elem := range rel.Data.([]*ResourceIdentifierObject) {
 				ft := field.Type().Elem()
-				if ft.Kind() == reflect.Ptr {
+				if ft.Kind() == reflect.Pointer {
 					ft = ft.Elem()
 				}
 				newInstance := reflect.New(ft)
@@ -222,7 +222,7 @@ func mapRelationships(relations map[string]*RelationshipObject, includes []*Reso
 			}
 		} else {
 			ft := field.Type()
-			if ft.Kind() == reflect.Ptr {
+			if ft.Kind() == reflect.Pointer {
 				ft = ft.Elem()
 			}
 			newValue := reflect.New(ft).Interface()

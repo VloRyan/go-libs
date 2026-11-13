@@ -94,7 +94,7 @@ func (d *Document) Objects(i int) *ResourceObject {
 	if v.IsNil() {
 		return nil
 	}
-	if v.Type().Kind() == reflect.Ptr {
+	if v.Type().Kind() == reflect.Pointer {
 		return v.Interface().(*ResourceObject)
 	}
 	return v.Index(i).Interface().(*ResourceObject)
@@ -181,7 +181,7 @@ func (d *Document) MapData(v any) error {
 	dv := reflect.ValueOf(d.Data)
 	if dv.Kind() == reflect.Slice {
 		vv := reflect.ValueOf(v)
-		if vv.Kind() != reflect.Ptr {
+		if vv.Kind() != reflect.Pointer {
 			return errors.New("v is no slice ptr")
 		}
 		vve := vv.Elem()
@@ -191,7 +191,7 @@ func (d *Document) MapData(v any) error {
 		for i := 0; i < dv.Len(); i++ {
 			obj := dv.Index(i).Interface().(*ResourceObject)
 			et := reflectx.ElemTypeOf(v, true)
-			if et.Kind() == reflect.Ptr {
+			if et.Kind() == reflect.Pointer {
 				et.Elem()
 			}
 			newElem := reflect.New(et)

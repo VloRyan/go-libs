@@ -52,7 +52,7 @@ func Select(q sqlQueryer, dest any, query string, args ...any) error {
 func unmarshalRows(rows *sql.Rows, dest any) error {
 	t := reflectx.TypeOf(dest, true)
 	if t.Kind() == reflect.Slice {
-		if reflect.TypeOf(dest).Kind() != reflect.Ptr {
+		if reflect.TypeOf(dest).Kind() != reflect.Pointer {
 			return errors.New("dest is no pointer to slice")
 		}
 		elemType := reflectx.ElemTypeOf(dest, true)
@@ -132,7 +132,7 @@ func scanStruct(columnNames []string, columnPointers []any, dest any) error {
 			}
 			if i == len(fieldPath)-1 {
 				pField := field
-				if pField.Kind() != reflect.Ptr {
+				if pField.Kind() != reflect.Pointer {
 					pField = field.Addr()
 				}
 				if scanner, ok := pField.Interface().(sql.Scanner); ok {
@@ -145,7 +145,7 @@ func scanStruct(columnNames []string, columnPointers []any, dest any) error {
 					}
 				}
 			} else {
-				if field.Type().Kind() == reflect.Ptr && field.IsNil() {
+				if field.Type().Kind() == reflect.Pointer && field.IsNil() {
 					field.Set(reflect.New(field.Type().Elem()))
 				}
 			}
@@ -246,7 +246,7 @@ func extractParamArgsFromStruct(obj any, names []string) ([]any, error) {
 			if !field.IsValid() {
 				return nil, errors.New("failed to resolve path '" + name + "' on struct " + reflect.TypeOf(obj).String())
 			}
-			if field.Kind() == reflect.Ptr && field.IsNil() {
+			if field.Kind() == reflect.Pointer && field.IsNil() {
 				currObj = nil
 				break
 			}
@@ -268,7 +268,7 @@ func convertValue(value any, typeHint string) any {
 		fallthrough
 	case "unix_timestamp":
 		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Ptr {
+		if v.Kind() == reflect.Pointer {
 			if v.IsNil() {
 				return value
 			}
