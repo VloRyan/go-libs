@@ -37,8 +37,12 @@ func mapAttribs(attribs map[string]any, v any) error {
 	}
 
 	for name, attrValue := range attribs {
-
-		field := reflectx.FindField(v, name)
+		field := reflectx.FindFieldFunc(v, func(field reflect.StructField) bool {
+			return reflectx.Tag(field, "json").Is(name)
+		})
+		if !field.IsValid() {
+			field = reflectx.FindField(v, name)
+		}
 		if !field.IsValid() {
 			continue
 		}

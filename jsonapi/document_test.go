@@ -73,6 +73,12 @@ func TestMapData(t *testing.T) {
 			{ID: 4711, Type: "person", Name: "Hans Müller", Age: 47, Salary: 666.66, Birthday: testhelper.Ptr(testhelper.ParseTime(t, "1985-06-15T12:13:59Z"))},
 			{ID: 4712, Type: "person", Name: "Gudrun Müller", Age: 46, Salary: 777.77, Birthday: testhelper.Ptr(testhelper.ParseTime(t, "1986-06-15T12:13:59Z"))},
 		},
+	}, {
+		name:     "map into json.RawMessage",
+		fileName: "./test/document_with_raw_data.json",
+		want: &testPerson{
+			ID: 4711, Type: "person", RawData: []byte(`{"title":"I'm raw"}`),
+		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
