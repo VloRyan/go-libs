@@ -125,7 +125,8 @@ func scanStruct(columnNames []string, columnPointers []any, dest any) error {
 				return err
 			}
 		} else {
-			if isProbablyJSON(*val) && (field.Kind() == reflect.Struct || field.Kind() == reflect.Pointer && field.Type().Elem().Kind() == reflect.Struct) {
+			fieldType := reflectx.ElemTypeOf(field, true)
+			if isProbablyJSON(*val) && (fieldType.Kind() == reflect.Struct || fieldType.Kind() == reflect.Map) {
 				strValue := (*val).(string)
 				newInstance := reflect.New(pField.Type())
 				err := json.Unmarshal([]byte(strValue), newInstance.Interface())
@@ -147,8 +148,11 @@ func scanStruct(columnNames []string, columnPointers []any, dest any) error {
 func isProbablyJSON(v any) bool {
 	valT := reflectx.ValueOf(v, true)
 	if valT.Kind() == reflect.String {
-		strValue := valT.String()
+		strValue := strings.TrimSpace(valT.String())
 		if strings.HasPrefix(strValue, "{") && strings.HasSuffix(strValue, "}") {
+			return true
+		}
+		if strings.HasPrefix(strValue, "[") && strings.HasSuffix(strValue, "]") {
 			return true
 		}
 	}

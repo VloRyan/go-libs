@@ -19,8 +19,10 @@ type dummyObject struct {
 	Nested struct {
 		Name string
 	}
-	Data         nameObject  `db:"json_data"`
-	NullableData *nameObject `db:"nullable_json_data"`
+	Data         nameObject            `db:"json_data"`
+	NullableData *nameObject           `db:"nullable_json_data"`
+	ArrayData    []nameObject          `db:"array_json_data"`
+	MapData      map[string]nameObject `db:"map_json_data"`
 }
 type dummyTimeObject struct {
 	CreatedAt time.Time  `db:"created_at"`
@@ -184,15 +186,15 @@ func TestSelect(t *testing.T) {
 	}, {
 		name: "json field",
 		args: args{
-			query: "SELECT json_data, other_json_data AS nullable_json_data  FROM tab WHERE id = :id",
+			query: "SELECT json_data, other_json_data AS nullable_json_data, array_json_data, map_json_data FROM tab WHERE id = :id",
 			args:  []any{map[string]any{"id": uint(7)}},
 		},
 		setupExpect: func(m sqlmock.Sqlmock) {
-			m.ExpectQuery("SELECT json_data, other_json_data AS nullable_json_data FROM tab WHERE id = ?").
+			m.ExpectQuery("SELECT json_data, other_json_data AS nullable_json_data, array_json_data, map_json_data FROM tab WHERE id = ?").
 				WithArgs(uint(7)).
-				WillReturnRows(sqlmock.NewRows([]string{"json_data", "nullable_json_data"}).AddRow(`{"name":"Herbert"}`, `{"name":"Jochen"}`))
+				WillReturnRows(sqlmock.NewRows([]string{"json_data", "nullable_json_data", "array_json_data", "map_json_data"}).AddRow(`{"name":"Herbert"}`, `{"name":"Jochen"}`, `[{"name":"Peter"},{"name":"Knut"}]`, `{"father":{"name":"Josef"}}`))
 		},
-		wantObject: &dummyObject{Data: nameObject{Name: "Herbert"}, NullableData: &nameObject{Name: "Jochen"}},
+		wantObject: &dummyObject{Data: nameObject{Name: "Herbert"}, NullableData: &nameObject{Name: "Jochen"}, ArrayData: []nameObject{{Name: "Peter"}, {Name: "Knut"}}, MapData: map[string]nameObject{"father": {Name: "Josef"}}},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
