@@ -58,7 +58,7 @@ const (
 type OrderDirection string
 
 const (
-	// OrderDefault leaved ordering to DBMS, SQLites default is ascending
+	// OrderDefault leaves ordering to DBMS, SQLites default is ascending
 	OrderDefault    OrderDirection = ""
 	OrderDescending OrderDirection = "DESC"
 )
@@ -222,14 +222,14 @@ func (s *Statement) whereExp() string {
 
 func (s *Statement) limitExp() string {
 	if s.limit > 0 {
-		return "LIMIT " + strconv.Itoa(int(s.limit))
+		return "LIMIT " + strconv.Itoa(s.limit)
 	}
 	return ""
 }
 
 func (s *Statement) offsetExp() string {
 	if s.offset > 0 {
-		return "OFFSET " + strconv.Itoa(int(s.offset))
+		return "OFFSET " + strconv.Itoa(s.offset)
 	}
 	return ""
 }
@@ -266,18 +266,6 @@ func (j *TableJoinDefinition) String() string {
 	return exp
 }
 
-func BuildPlaceholder(count int) string {
-	return strings.Join(strings.Split(strings.Repeat("?", count), ""), ", ")
-}
-
-func BuildPlaceholderMap[T any](s []T) map[string]any {
-	placeholder := make(map[string]any)
-	for i, e := range s {
-		placeholder["p"+strconv.Itoa(i)] = e
-	}
-	return placeholder
-}
-
 func maskFieldNameIfNeeded(name string) string {
 	if name == "index" {
 		return "`" + name + "`"
@@ -300,11 +288,4 @@ func FieldColumnsFromNames(names ...string) []ColumnExpression {
 		})
 	}
 	return fieldDefs
-}
-
-func ToParamSlice[ID comparable](ids []ID) (r []any) {
-	for _, e := range ids {
-		r = append(r, e)
-	}
-	return
 }
