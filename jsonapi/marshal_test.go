@@ -166,8 +166,8 @@ type testPerson struct {
 	Children          []*testPerson    `json:"children,omitempty"`
 	NestedRef         *objectWithRef   `json:"nestedRef,omitempty"`
 	ChildrenNestedRef []*objectWithRef `json:"childrenNestedRef,omitempty"`
-	Data              any
-	RawData           json.RawMessage `json:"data,omitempty"`
+	Data              any              `json:"-"`
+	RawData           json.RawMessage  `json:"data,omitempty"`
 }
 
 func (p *testPerson) GetIdentifier() *ResourceIdentifierObject {
