@@ -2,6 +2,7 @@ package sqlx
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -111,49 +112,76 @@ func scanStruct(columnNames []string, columnPointers []any, dest any) error {
 		if *val == nil {
 			continue
 		}
-		currentField := reflect.ValueOf(dest)
-		fieldPath := strings.Split(colName, ".")
-		for i := 0; i < len(fieldPath); i++ {
-			field := reflectx.FindFieldFunc(currentField.Interface(), func(field reflect.StructField) bool {
-				dbTag := reflectx.Tag(field, "db")
-				if dbTag.Value != "" {
-					if dbTag.Value == fieldPath[i] {
-						return true
-					}
-					if len(dbTag.Opts) > 0 && dbTag.Opts[0] == fieldPath[i] {
-						return true
-					}
-				}
-				return strings.EqualFold(field.Name, stringx.ToCamelCase(fieldPath[i]))
-			})
-
-			if !field.IsValid() {
-				continue
+		field := walkPath(dest, strings.Split(colName, "."))
+		if !field.IsValid() {
+			continue
+		}
+		pField := field
+		if pField.Kind() != reflect.Pointer {
+			pField = field.Addr()
+		}
+		if scanner, ok := pField.Interface().(sql.Scanner); ok {
+			if err := scanner.Scan(*val); err != nil {
+				return err
 			}
-			if i == len(fieldPath)-1 {
-				pField := field
-				if pField.Kind() != reflect.Pointer {
-					pField = field.Addr()
-				}
-				if scanner, ok := pField.Interface().(sql.Scanner); ok {
-					if err := scanner.Scan(*val); err != nil {
+		} else {
+			if isProbablyJSON(*val) && (field.Kind() == reflect.Struct || field.Kind() == reflect.Pointer && field.Type().Elem().Kind() == reflect.Struct) {
+				strValue := (*val).(string)
+				newInstance := reflect.New(pField.Type())
+				err := json.Unmarshal([]byte(strValue), newInstance.Interface())
+				if err == nil {
+					if err := reflectx.SetFieldValue(field, newInstance.Elem().Interface()); err != nil {
 						return err
 					}
-				} else {
-					if err := reflectx.SetFieldValue(field, *val); err != nil {
-						return err
-					}
-				}
-			} else {
-				if field.Type().Kind() == reflect.Pointer && field.IsNil() {
-					field.Set(reflect.New(field.Type().Elem()))
+					continue
 				}
 			}
-			currentField = field
-
+			if err := reflectx.SetFieldValue(field, *val); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+func isProbablyJSON(v any) bool {
+	valT := reflectx.ValueOf(v, true)
+	if valT.Kind() == reflect.String {
+		strValue := valT.String()
+		if strings.HasPrefix(strValue, "{") && strings.HasSuffix(strValue, "}") {
+			return true
+		}
+	}
+	return false
+}
+
+func walkPath(v any, path []string) reflect.Value {
+	currentField := reflect.ValueOf(v)
+	for i := range path {
+		field := reflectx.FindFieldFunc(currentField.Interface(), func(field reflect.StructField) bool {
+			dbTag := reflectx.Tag(field, "db")
+			if dbTag.Value != "" {
+				if dbTag.Value == path[i] {
+					return true
+				}
+				if len(dbTag.Opts) > 0 && dbTag.Opts[0] == path[i] {
+					return true
+				}
+			}
+			return strings.EqualFold(field.Name, stringx.ToCamelCase(path[i]))
+		})
+
+		if !field.IsValid() {
+			return reflect.Value{}
+		}
+		if i < len(path)-1 {
+			if field.Type().Kind() == reflect.Pointer && field.IsNil() {
+				field.Set(reflect.New(field.Type().Elem()))
+			}
+		}
+		currentField = field
+	}
+	return currentField
 }
 
 func Exec(q sqlQueryer, query string, args ...any) (sql.Result, error) {
