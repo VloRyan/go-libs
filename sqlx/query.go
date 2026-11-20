@@ -165,6 +165,9 @@ func walkPath(v any, path []string) reflect.Value {
 		field := reflectx.FindFieldFunc(currentField.Interface(), func(field reflect.StructField) bool {
 			dbTag := reflectx.Tag(field, "db")
 			if dbTag.Value != "" {
+				if dbTag.Value == "-" {
+					return false
+				}
 				if dbTag.Value == path[i] {
 					return true
 				}
@@ -263,15 +266,16 @@ func extractParamArgsFromStruct(obj any, names []string) ([]any, error) {
 	paramArgs := make([]any, 0, len(names))
 	for _, name := range names {
 		nameParts := strings.Split(name, ".")
-		currObj := obj
+		currentFieldValue := obj
 		for i, namePart := range nameParts {
 			var dbTag reflectx.FieldTag
-			field := reflectx.FindFieldFunc(currObj, func(field reflect.StructField) bool {
+			field := reflectx.FindFieldFunc(currentFieldValue, func(field reflect.StructField) bool {
 				dbTag = reflectx.Tag(field, "db")
 				if dbTag.Value != "" {
-					if dbTag.Value == name {
-						return true
+					if dbTag.Value == "-" {
+						return false
 					}
+					return dbTag.Value == name
 				}
 				return strings.EqualFold(field.Name, stringx.ToCamelCase(namePart))
 			})
@@ -279,20 +283,24 @@ func extractParamArgsFromStruct(obj any, names []string) ([]any, error) {
 				return nil, errors.New("failed to resolve path '" + name + "' on struct " + reflect.TypeOf(obj).String())
 			}
 			if field.Kind() == reflect.Pointer && field.IsNil() {
-				currObj = nil
+				currentFieldValue = nil
 				break
 			}
-			currObj = field.Interface()
+			currentFieldValue = field.Interface()
 			if i == len(nameParts)-1 && len(dbTag.Opts) > 0 {
-				currObj = convertValue(currObj, dbTag.Opts[0])
+				var err error
+				currentFieldValue, err = convertValue(currentFieldValue, dbTag.Opts[0])
+				if err != nil {
+					return nil, errors.Join(errors.New("failed to convert value"), err)
+				}
 			}
 		}
-		paramArgs = append(paramArgs, currObj)
+		paramArgs = append(paramArgs, currentFieldValue)
 	}
 	return paramArgs, nil
 }
 
-func convertValue(value any, typeHint string) any {
+func convertValue(value any, typeHint string) (any, error) {
 	switch strings.ToLower(typeHint) {
 	case "unixts":
 		fallthrough
@@ -302,14 +310,30 @@ func convertValue(value any, typeHint string) any {
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.Pointer {
 			if v.IsNil() {
-				return value
+				return value, nil
 			}
 			v = v.Elem()
 		}
-		if v.Kind() == reflect.Struct && v.Type() == reflect.TypeOf(time.Time{}) {
+		if v.Kind() == reflect.Struct && v.Type() == reflect.TypeFor[time.Time]() {
 			t := v.Interface().(time.Time)
-			return t.Unix()
+			return t.Unix(), nil
+		}
+	case "jsonb": // TODO SQLite specific
+		if value == nil || reflect.ValueOf(value).IsNil() {
+			var nilStr *string = nil
+			return nilStr, nil
+		}
+		vv := reflectx.ValueOf(value, true)
+		if vv.Kind() == reflect.Map ||
+			vv.Kind() == reflect.Array ||
+			vv.Kind() == reflect.Slice ||
+			vv.Kind() == reflect.Struct {
+			j, err := json.Marshal(value)
+			if err != nil {
+				return nil, err
+			}
+			return string(j), nil
 		}
 	}
-	return value
+	return value, nil
 }
